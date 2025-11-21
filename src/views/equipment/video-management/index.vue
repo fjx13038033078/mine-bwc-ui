@@ -50,6 +50,7 @@
         <el-table-column label="视频ID" align="center" prop="videoId" width="120" />
         <el-table-column label="设备ID" align="center" prop="deviceId" width="100" />
         <el-table-column label="用户编号" align="center" prop="userNumber" width="120" />
+        <el-table-column label="责任人" align="center" prop="principal" width="100" />
         <el-table-column label="视频缩略图" align="center" width="120">
           <template #default="scope">
             <el-image
@@ -137,15 +138,16 @@
             <el-descriptions-item label="视频ID">{{ currentVideo.videoId }}</el-descriptions-item>
             <el-descriptions-item label="设备ID">{{ currentVideo.deviceId }}</el-descriptions-item>
             <el-descriptions-item label="用户编号">{{ currentVideo.userNumber }}</el-descriptions-item>
-            <el-descriptions-item label="时长">{{ currentVideo.duration }}</el-descriptions-item>
+            <el-descriptions-item label="责任人">{{ currentVideo.principal }}</el-descriptions-item>
             <el-descriptions-item label="拍摄时间">{{ currentVideo.captureTime }}</el-descriptions-item>
             <el-descriptions-item label="上传时间">{{ currentVideo.uploadTime }}</el-descriptions-item>
+            <el-descriptions-item label="时长">{{ currentVideo.duration }}</el-descriptions-item>
             <el-descriptions-item label="AI检测状态">
               <el-tag :type="getStatusType(currentVideo.aiStatus)" size="small">
                 {{ getStatusText(currentVideo.aiStatus) }}
               </el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="违规检测">
+            <el-descriptions-item label="违规检测" :span="2">
               <el-tag v-if="currentVideo.aiStatus === 'completed'" :type="currentVideo.violationCount > 0 ? 'danger' : 'success'" size="small">
                 {{ currentVideo.violationCount > 0 ? `${currentVideo.violationCount}项违规` : '无违规' }}
               </el-tag>
@@ -242,6 +244,7 @@ interface VideoVO {
   videoId: string;
   deviceId: string;
   userNumber: string;
+  principal: string;
   videoUrl: string;
   thumbnail: string;
   duration: string;
@@ -297,6 +300,7 @@ const staticVideoData: VideoVO[] = [
     videoId: 'VIDEO001',
     deviceId: 'DEV001',
     userNumber: 'USER001',
+    principal: '张三',
     videoUrl: localVideo,
     thumbnail: 'https://picsum.photos/200/150?random=1',
     duration: '05:23',
@@ -309,6 +313,7 @@ const staticVideoData: VideoVO[] = [
     videoId: 'VIDEO002',
     deviceId: 'DEV002',
     userNumber: 'USER002',
+    principal: '李四',
     videoUrl: localVideo,
     thumbnail: 'https://picsum.photos/200/150?random=2',
     duration: '03:45',
@@ -321,6 +326,7 @@ const staticVideoData: VideoVO[] = [
     videoId: 'VIDEO003',
     deviceId: 'DEV001',
     userNumber: 'USER001',
+    principal: '张三',
     videoUrl: localVideo,
     thumbnail: 'https://picsum.photos/200/150?random=3',
     duration: '07:12',
@@ -333,6 +339,7 @@ const staticVideoData: VideoVO[] = [
     videoId: 'VIDEO004',
     deviceId: 'DEV003',
     userNumber: 'USER003',
+    principal: '王五',
     videoUrl: localVideo,
     thumbnail: 'https://picsum.photos/200/150?random=4',
     duration: '04:56',
@@ -345,6 +352,7 @@ const staticVideoData: VideoVO[] = [
     videoId: 'VIDEO005',
     deviceId: 'DEV004',
     userNumber: 'USER004',
+    principal: '赵六',
     videoUrl: localVideo,
     thumbnail: 'https://picsum.photos/200/150?random=5',
     duration: '06:33',
@@ -357,6 +365,7 @@ const staticVideoData: VideoVO[] = [
     videoId: 'VIDEO006',
     deviceId: 'DEV002',
     userNumber: 'USER002',
+    principal: '李四',
     videoUrl: localVideo,
     thumbnail: 'https://picsum.photos/200/150?random=6',
     duration: '08:21',
@@ -369,6 +378,7 @@ const staticVideoData: VideoVO[] = [
     videoId: 'VIDEO007',
     deviceId: 'DEV005',
     userNumber: 'USER005',
+    principal: '孙七',
     videoUrl: localVideo,
     thumbnail: 'https://picsum.photos/200/150?random=7',
     duration: '05:47',
@@ -381,6 +391,7 @@ const staticVideoData: VideoVO[] = [
     videoId: 'VIDEO008',
     deviceId: 'DEV001',
     userNumber: 'USER001',
+    principal: '张三',
     videoUrl: localVideo,
     thumbnail: 'https://picsum.photos/200/150?random=8',
     duration: '04:12',
