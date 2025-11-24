@@ -201,3 +201,19 @@ export const COMMON_VIOLATIONS = [
   '未停电作业'
 ] as const;
 
+// 违规类型选项（用于下拉选择）
+export const VIOLATION_TYPES = [
+  { label: '未佩戴安全帽', value: '未佩戴安全帽' },
+  { label: '未系安全带', value: '未系安全带' },
+  { label: '未穿防护服', value: '未穿防护服' },
+  { label: '违规操作设备', value: '违规操作设备' },
+  { label: '无证上岗', value: '无证上岗' },
+  { label: '气瓶混放', value: '气瓶混放' },
+  { label: '气瓶平放', value: '气瓶平放' },
+  { label: '吊装违规', value: '吊装违规' },
+  { label: '动火违规', value: '动火违规' },
+  { label: '高处抛物', value: '高处抛物' },
+  { label: '无监护人', value: '无监护人' },
+  { label: '通风不良', value: '通风不良' }
+] as const;
+

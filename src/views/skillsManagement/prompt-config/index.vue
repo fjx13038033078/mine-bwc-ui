@@ -46,7 +46,7 @@
 
       <!-- 统计卡片 -->
       <el-row :gutter="20" class="mb-4">
-        <el-col :span="6">
+        <el-col :span="8">
           <el-card shadow="hover" class="stat-card">
             <div class="stat-content">
               <el-icon :size="40" color="#409EFF"><i-ep-document /></el-icon>
@@ -57,7 +57,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="8">
           <el-card shadow="hover" class="stat-card">
             <div class="stat-content">
               <el-icon :size="40" color="#67C23A"><i-ep-circle-check /></el-icon>
@@ -68,24 +68,13 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="8">
           <el-card shadow="hover" class="stat-card">
             <div class="stat-content">
               <el-icon :size="40" color="#E6A23C"><i-ep-warning /></el-icon>
               <div class="stat-text">
                 <div class="stat-value">{{ unconfiguredCount }}</div>
                 <div class="stat-label">待配置</div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card shadow="hover" class="stat-card">
-            <div class="stat-content">
-              <el-icon :size="40" color="#909399"><i-ep-sort /></el-icon>
-              <div class="stat-text">
-                <div class="stat-value">{{ totalVersions }}</div>
-                <div class="stat-label">版本总数</div>
               </div>
             </div>
           </el-card>
@@ -118,18 +107,6 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="当前版本" align="center" prop="currentVersion" width="100">
-          <template #default="scope">
-            <el-tag type="primary" size="small">v{{ scope.row.currentVersion }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="版本数" align="center" prop="versionCount" width="80">
-          <template #default="scope">
-            <span :style="{ color: scope.row.versionCount > 1 ? '#409EFF' : '#909399' }">
-              {{ scope.row.versionCount }}
-            </span>
-          </template>
-        </el-table-column>
         <el-table-column label="系统提示词" align="left" prop="systemPrompt" :show-overflow-tooltip="true" min-width="200">
           <template #default="scope">
             <span v-if="scope.row.systemPrompt" class="prompt-preview">
@@ -148,16 +125,13 @@
         </el-table-column>
         <el-table-column label="更新时间" align="center" prop="updateTime" width="160" />
 
-        <el-table-column label="操作" fixed="right" width="300" class-name="small-padding fixed-width">
+        <el-table-column label="操作" fixed="right" width="240" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-tooltip content="查看详情" placement="top">
               <el-button link type="primary" icon="View" @click="handleView(scope.row)"></el-button>
             </el-tooltip>
             <el-tooltip content="编辑配置" placement="top">
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="版本管理" placement="top">
-              <el-button link type="primary" icon="FolderOpened" @click="handleVersions(scope.row)"></el-button>
             </el-tooltip>
             <el-tooltip content="测试提示词" placement="top">
               <el-button link type="success" icon="CircleCheck" @click="handleTest(scope.row)"></el-button>
@@ -172,28 +146,18 @@
     <!-- 新增/编辑提示词配置对话框 -->
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="900px" append-to-body @close="closeDialog">
       <el-form ref="promptFormRef" :model="form" :rules="rules" label-width="120px">
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="技能名称" prop="skillId">
-              <el-select v-model="form.skillId" placeholder="请选择技能" style="width: 100%" :disabled="!!form.promptId" @change="handleSkillChange">
-                <el-option v-for="skill in enabledSkills" :key="skill.id" :label="skill.name" :value="skill.id">
-                  <div class="skill-option">
-                    <el-icon :color="skill.color">
-                      <component :is="skill.icon" />
-                    </el-icon>
-                    <span style="margin-left: 8px">{{ skill.name }}</span>
-                  </div>
-                </el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="版本号" prop="version">
-              <el-input v-model="form.version" placeholder="如：1.0" maxlength="20" />
-              <div class="form-tip">修改配置将自动创建新版本</div>
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <el-form-item label="技能名称" prop="skillId">
+          <el-select v-model="form.skillId" placeholder="请选择技能" style="width: 100%" :disabled="!!form.promptId" @change="handleSkillChange">
+            <el-option v-for="skill in enabledSkills" :key="skill.id" :label="skill.name" :value="skill.id">
+              <div class="skill-option">
+                <el-icon :color="skill.color">
+                  <component :is="skill.icon" />
+                </el-icon>
+                <span style="margin-left: 8px">{{ skill.name }}</span>
+              </div>
+            </el-option>
+          </el-select>
+        </el-form-item>
 
         <el-form-item label="系统提示词" prop="systemPrompt">
           <el-input
@@ -258,11 +222,6 @@
             {{ viewData.configured ? '已配置' : '待配置' }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="当前版本">
-          <el-tag type="primary" size="small">v{{ viewData.currentVersion }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="版本数量">{{ viewData.versionCount }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">{{ viewData.createTime }}</el-descriptions-item>
         <el-descriptions-item label="更新时间" :span="2">{{ viewData.updateTime }}</el-descriptions-item>
       </el-descriptions>
 
@@ -288,54 +247,6 @@
       </template>
     </el-dialog>
 
-    <!-- 版本管理对话框 -->
-    <el-dialog v-model="versionDialog.visible" :title="`${currentSkillName} - 版本管理`" width="1000px" append-to-body>
-      <el-table :data="versionList" border>
-        <el-table-column label="版本号" prop="version" width="100">
-          <template #default="scope">
-            <el-tag type="primary" size="small">v{{ scope.row.version }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" prop="isCurrent" width="100">
-          <template #default="scope">
-            <el-tag v-if="scope.row.isCurrent" type="success" size="small">当前版本</el-tag>
-            <el-tag v-else type="info" size="small">历史版本</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="系统提示词" prop="systemPrompt" :show-overflow-tooltip="true" min-width="200">
-          <template #default="scope">
-            <span class="prompt-preview">{{ truncateText(scope.row.systemPrompt, 60) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="用户提示词" prop="userPrompt" :show-overflow-tooltip="true" min-width="200">
-          <template #default="scope">
-            <span class="prompt-preview">{{ truncateText(scope.row.userPrompt, 60) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="配置说明" prop="description" :show-overflow-tooltip="true" width="150" />
-        <el-table-column label="创建时间" prop="createTime" width="160" />
-        <el-table-column label="操作" fixed="right" width="200">
-          <template #default="scope">
-            <el-tooltip content="查看详情" placement="top">
-              <el-button link type="primary" icon="View" @click="handleViewVersion(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="切换到此版本" placement="top" v-if="!scope.row.isCurrent">
-              <el-button link type="success" icon="Select" @click="handleSwitchVersion(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="对比版本" placement="top">
-              <el-button link type="primary" icon="Operation" @click="handleCompareVersion(scope.row)"></el-button>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="versionDialog.visible = false">关 闭</el-button>
-        </div>
-      </template>
-    </el-dialog>
-
     <!-- 测试提示词对话框 -->
     <el-dialog v-model="testDialog.visible" :title="`测试提示词 - ${testData.skillName}`" width="900px" append-to-body>
       <el-alert title="提示词测试功能" type="info" :closable="false" style="margin-bottom: 16px">
@@ -353,12 +264,7 @@
         </el-form-item>
 
         <el-form-item label="测试输入">
-          <el-input
-            v-model="testData.input"
-            type="textarea"
-            :rows="4"
-            placeholder="输入测试数据，如：视频中作业人员未佩戴安全帽..."
-          />
+          <el-input v-model="testData.input" type="textarea" :rows="4" placeholder="输入测试数据，如：视频中作业人员未佩戴安全帽..." />
         </el-form-item>
 
         <el-form-item>
@@ -411,22 +317,9 @@ interface PromptConfigVO {
   systemPrompt: string;
   userPrompt: string;
   configured: boolean;
-  currentVersion: string;
-  versionCount: number;
   description?: string;
   createTime: string;
   updateTime: string;
-}
-
-interface PromptVersion {
-  versionId: string;
-  promptId: string;
-  version: string;
-  systemPrompt: string;
-  userPrompt: string;
-  description?: string;
-  isCurrent: boolean;
-  createTime: string;
 }
 
 interface PromptForm {
@@ -434,7 +327,6 @@ interface PromptForm {
   skillId: string;
   systemPrompt: string;
   userPrompt: string;
-  version: string;
   description?: string;
 }
 
@@ -466,53 +358,14 @@ const staticPromptData: PromptConfigVO[] = AI_SKILLS.map((skill, index) => {
       ? `请仔细分析视频画面中的${skill.workTypes.join('、')}场景。重点关注：\n1. 作业人员是否按规范操作\n2. 是否存在违规行为\n3. 安全防护措施是否到位\n4. 作业环境是否符合安全要求\n\n如发现违规，请详细描述违规行为、位置和严重程度。`
       : '',
     configured: isConfigured,
-    currentVersion: isConfigured ? `${index + 1}.0` : '0.0',
-    versionCount: isConfigured ? Math.floor(Math.random() * 3) + 1 : 0,
     description: isConfigured ? `${skill.name}的提示词配置，优化识别准确率` : undefined,
     createTime: '2024-01-10 09:00:00',
     updateTime: formatDateTime()
   };
 });
 
-// 模拟版本历史数据
-const staticVersionData: Record<string, PromptVersion[]> = {
-  violation_detection: [
-    {
-      versionId: 'VER_001_003',
-      promptId: 'PROMPT_VIOLATION_DETECTION',
-      version: '3.0',
-      systemPrompt: '你是一个专业的铜矿安全监控AI助手，专门负责违规行为识别。',
-      userPrompt: '请分析视频中的违规行为...',
-      description: '优化识别逻辑，提升准确率',
-      isCurrent: true,
-      createTime: '2024-11-20 14:30:00'
-    },
-    {
-      versionId: 'VER_001_002',
-      promptId: 'PROMPT_VIOLATION_DETECTION',
-      version: '2.0',
-      systemPrompt: '你是一个铜矿安全监控AI助手...',
-      userPrompt: '请识别视频中的违规...',
-      description: '增加更多识别场景',
-      isCurrent: false,
-      createTime: '2024-10-15 10:00:00'
-    },
-    {
-      versionId: 'VER_001_001',
-      promptId: 'PROMPT_VIOLATION_DETECTION',
-      version: '1.0',
-      systemPrompt: '你是一个AI助手...',
-      userPrompt: '请分析视频...',
-      description: '初始版本',
-      isCurrent: false,
-      createTime: '2024-09-01 09:00:00'
-    }
-  ]
-};
-
 const promptList = ref<PromptConfigVO[]>([]);
 const allPromptList = ref<PromptConfigVO[]>([...staticPromptData]);
-const versionList = ref<PromptVersion[]>([]);
 const loading = ref(false);
 const showSearch = ref(true);
 const ids = ref<Array<string>>([]);
@@ -532,11 +385,6 @@ const viewDialog = reactive<DialogOption>({
   title: ''
 });
 
-const versionDialog = reactive<DialogOption>({
-  visible: false,
-  title: ''
-});
-
 const testDialog = reactive<DialogOption>({
   visible: false,
   title: ''
@@ -547,7 +395,6 @@ const initFormData: PromptForm = {
   skillId: '',
   systemPrompt: '',
   userPrompt: '',
-  version: '1.0',
   description: ''
 };
 
@@ -563,11 +410,9 @@ const data = reactive({
   rules: {
     skillId: [{ required: true, message: '请选择技能', trigger: 'change' }],
     systemPrompt: [{ required: true, message: '系统提示词不能为空', trigger: 'blur' }],
-    userPrompt: [{ required: true, message: '用户提示词不能为空', trigger: 'blur' }],
-    version: [{ required: true, message: '版本号不能为空', trigger: 'blur' }]
+    userPrompt: [{ required: true, message: '用户提示词不能为空', trigger: 'blur' }]
   },
   viewData: {} as PromptConfigVO,
-  currentSkillName: '',
   testData: {
     skillName: '',
     scenario: '',
@@ -577,7 +422,7 @@ const data = reactive({
   }
 });
 
-const { queryParams, form, rules, viewData, currentSkillName, testData } = toRefs(data);
+const { queryParams, form, rules, viewData, testData } = toRefs(data);
 
 // 计算统计数据
 const configuredCount = computed(() => {
@@ -586,10 +431,6 @@ const configuredCount = computed(() => {
 
 const unconfiguredCount = computed(() => {
   return allPromptList.value.filter((prompt) => !prompt.configured).length;
-});
-
-const totalVersions = computed(() => {
-  return allPromptList.value.reduce((sum, prompt) => sum + prompt.versionCount, 0);
 });
 
 /** 查询提示词配置列表 */
@@ -673,8 +514,7 @@ const handleUpdate = (row?: PromptConfigVO) => {
       skillId: prompt.skillId,
       systemPrompt: prompt.systemPrompt,
       userPrompt: prompt.userPrompt,
-      version: String(parseFloat(prompt.currentVersion) + 0.1),
-      description: ''
+      description: prompt.description || ''
     };
   }
 };
@@ -701,13 +541,11 @@ const submitForm = () => {
         if (index !== -1) {
           allPromptList.value[index].systemPrompt = form.value.systemPrompt;
           allPromptList.value[index].userPrompt = form.value.userPrompt;
-          allPromptList.value[index].currentVersion = form.value.version;
-          allPromptList.value[index].versionCount += 1;
           allPromptList.value[index].configured = true;
           allPromptList.value[index].description = form.value.description;
           allPromptList.value[index].updateTime = currentTime;
         }
-        proxy?.$modal.msgSuccess('修改成功，已生成新版本');
+        proxy?.$modal.msgSuccess('修改成功');
       } else {
         // 新增配置
         const skill = AI_SKILLS.find((s) => s.id === form.value.skillId);
@@ -722,8 +560,6 @@ const submitForm = () => {
             systemPrompt: form.value.systemPrompt,
             userPrompt: form.value.userPrompt,
             configured: true,
-            currentVersion: form.value.version,
-            versionCount: 1,
             description: form.value.description,
             createTime: currentTime,
             updateTime: currentTime
@@ -743,69 +579,6 @@ const submitForm = () => {
       await getList();
     }
   });
-};
-
-/** 版本管理 */
-const handleVersions = (row: PromptConfigVO) => {
-  currentSkillName.value = row.skillName;
-  // 获取该技能的版本历史（模拟）
-  versionList.value = staticVersionData[row.skillId] || [
-    {
-      versionId: `VER_${row.promptId}_001`,
-      promptId: row.promptId,
-      version: row.currentVersion,
-      systemPrompt: row.systemPrompt,
-      userPrompt: row.userPrompt,
-      description: row.description,
-      isCurrent: true,
-      createTime: row.updateTime
-    }
-  ];
-  versionDialog.visible = true;
-};
-
-/** 查看版本详情 */
-const handleViewVersion = (version: PromptVersion) => {
-  const prompt = allPromptList.value.find((p) => p.promptId === version.promptId);
-  if (prompt) {
-    viewData.value = {
-      ...prompt,
-      systemPrompt: version.systemPrompt,
-      userPrompt: version.userPrompt,
-      currentVersion: version.version,
-      description: version.description
-    };
-    viewDialog.visible = true;
-  }
-};
-
-/** 切换版本 */
-const handleSwitchVersion = (version: PromptVersion) => {
-  proxy?.$modal
-    .confirm(`确认切换到版本 v${version.version} 吗？`)
-    .then(() => {
-      const index = allPromptList.value.findIndex((item) => item.promptId === version.promptId);
-      if (index !== -1) {
-        allPromptList.value[index].systemPrompt = version.systemPrompt;
-        allPromptList.value[index].userPrompt = version.userPrompt;
-        allPromptList.value[index].currentVersion = version.version;
-        allPromptList.value[index].updateTime = formatDateTime();
-      }
-
-      // 更新版本列表中的当前版本标记
-      versionList.value.forEach((v) => {
-        v.isCurrent = v.versionId === version.versionId;
-      });
-
-      proxy?.$modal.msgSuccess('版本切换成功');
-      getList();
-    })
-    .catch(() => {});
-};
-
-/** 对比版本 */
-const handleCompareVersion = (version: PromptVersion) => {
-  proxy?.$modal.msgSuccess('版本对比功能开发中...');
 };
 
 /** 测试提示词 */
@@ -857,7 +630,6 @@ const handleExport = () => {
     技能名称: item.skillName,
     技能类别: item.category,
     配置状态: item.configured ? '已配置' : '待配置',
-    当前版本: item.currentVersion,
     系统提示词: item.systemPrompt,
     用户提示词: item.userPrompt,
     配置说明: item.description || '',
@@ -972,4 +744,3 @@ onMounted(() => {
   background-color: #f0f9ff;
 }
 </style>
-
