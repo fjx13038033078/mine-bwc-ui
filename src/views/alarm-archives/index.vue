@@ -1,7 +1,44 @@
 <template>
-  <div class="app-container">
+  <div class="p-2">
+    <!-- 搜索区域 -->
+    <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
+      <div v-show="showSearch" class="mb-[10px]">
+        <el-card shadow="hover">
+          <el-form ref="queryFormRef" :model="queryParams" :inline="true">
+            <el-form-item label="统计周期" prop="period">
+              <el-select v-model="queryParams.period" placeholder="选择周期" clearable style="width: 150px">
+                <el-option label="按日统计" value="daily" />
+                <el-option label="按周统计" value="weekly" />
+                <el-option label="按月统计" value="monthly" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="时间范围" prop="dateRange">
+              <el-date-picker
+                v-model="queryParams.dateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                value-format="YYYY-MM-DD"
+                style="width: 280px"
+              />
+            </el-form-item>
+            <el-form-item label="部门" prop="department">
+              <el-select v-model="queryParams.department" placeholder="选择部门" clearable style="width: 150px">
+                <el-option v-for="dept in departments" :key="dept.value" :label="dept.label" :value="dept.value" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+      </div>
+    </transition>
+
     <!-- 统计卡片区域 -->
-    <el-row :gutter="20" class="statistics-cards">
+    <el-row :gutter="20" class="mb-[10px]">
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
@@ -56,50 +93,21 @@
       </el-col>
     </el-row>
 
-    <!-- 搜索区域 -->
-    <el-card shadow="never" class="search-card">
-      <el-form :model="queryParams" :inline="true">
-        <el-form-item label="统计周期">
-          <el-select v-model="queryParams.period" placeholder="选择周期" clearable style="width: 150px">
-            <el-option label="按日统计" value="daily" />
-            <el-option label="按周统计" value="weekly" />
-            <el-option label="按月统计" value="monthly" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="时间范围">
-          <el-date-picker
-            v-model="queryParams.dateRange"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            value-format="YYYY-MM-DD"
-            style="width: 280px"
-          />
-        </el-form-item>
-        <el-form-item label="部门">
-          <el-select v-model="queryParams.department" placeholder="选择部门" clearable style="width: 150px">
-            <el-option v-for="dept in departments" :key="dept.value" :label="dept.label" :value="dept.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleQuery">查询</el-button>
-          <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
-          <el-button type="success" :icon="Download" @click="handleExport">导出报表</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
     <!-- 数据表格 -->
-    <el-card shadow="never" class="table-card">
+    <el-card shadow="hover">
       <template #header>
-        <div class="card-header">
-          <span class="card-title">报警档案列表</span>
-          <div class="header-buttons">
-            <el-button type="success" :icon="Download" @click="handleAutoGenerate"> 从已归档违规自动生成 </el-button>
-            <el-button type="primary" :icon="Plus" @click="handleAdd">手动新增档案</el-button>
-          </div>
-        </div>
+        <el-row :gutter="10">
+          <el-col :span="1.5">
+            <el-button type="success" plain icon="Download" @click="handleAutoGenerate">从已归档违规自动生成</el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button type="primary" plain icon="Plus" @click="handleAdd">手动新增档案</el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button type="warning" plain icon="Download" @click="handleExport">导出报表</el-button>
+          </el-col>
+          <right-toolbar v-model:show-search="showSearch" @query-table="handleQuery"></right-toolbar>
+        </el-row>
       </template>
 
       <el-table v-loading="loading" :data="archiveList" border stripe style="width: 100%">
@@ -158,15 +166,7 @@
         </el-table-column>
       </el-table>
 
-      <el-pagination
-        v-model:current-page="queryParams.pageNum"
-        v-model:page-size="queryParams.pageSize"
-        :total="total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleQuery"
-        @current-change="handleQuery"
-      />
+      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="handleQuery" />
     </el-card>
 
     <!-- 新增/编辑对话框 -->
@@ -421,6 +421,8 @@ interface AlarmArchiveForm {
 // ==================== 状态管理 ====================
 
 const loading = ref(false);
+const showSearch = ref(true);
+const queryFormRef = ref<FormInstance>();
 const departments = DEPARTMENTS;
 
 // 查询参数
@@ -887,78 +889,39 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.app-container {
-  padding: 20px;
-}
+.stat-card {
+  cursor: pointer;
+  transition: all 0.3s;
 
-.statistics-cards {
-  margin-bottom: 20px;
-
-  .stat-card {
-    cursor: pointer;
-    transition: all 0.3s;
-
-    &:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    }
-
-    .stat-content {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-
-      .stat-icon {
-        flex-shrink: 0;
-      }
-
-      .stat-text {
-        flex: 1;
-
-        .stat-value {
-          font-size: 28px;
-          font-weight: bold;
-          color: #303133;
-          margin-bottom: 8px;
-        }
-
-        .stat-label {
-          font-size: 14px;
-          color: #909399;
-        }
-      }
-    }
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   }
-}
 
-.search-card {
-  margin-bottom: 20px;
-
-  :deep(.el-form-item) {
-    margin-bottom: 0;
-  }
-}
-
-.table-card {
-  .card-header {
+  .stat-content {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 20px;
 
-    .card-title {
-      font-size: 16px;
-      font-weight: bold;
-      color: #303133;
+    .stat-icon {
+      flex-shrink: 0;
     }
 
-    .header-buttons {
-      display: flex;
-      gap: 10px;
-    }
-  }
+    .stat-text {
+      flex: 1;
 
-  :deep(.el-table) {
-    margin-bottom: 20px;
+      .stat-value {
+        font-size: 28px;
+        font-weight: bold;
+        color: #303133;
+        margin-bottom: 8px;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: #909399;
+      }
+    }
   }
 }
 </style>
