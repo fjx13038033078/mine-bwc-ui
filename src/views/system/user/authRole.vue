@@ -144,3 +144,21 @@ onMounted(() => {
   getList();
 });
 </script>
+
+<style scoped lang="scss">
+.panel {
+  margin-bottom: 20px;
+  background: #fff;
+  border-radius: 4px;
+  padding: 15px 20px;
+}
+
+  {
+  font-size: 15px;
+  font-weight: bold;
+  color: #333;
+  margin: 0 0 15px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #409eff;
+}
+</style>
