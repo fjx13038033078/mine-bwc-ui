@@ -309,7 +309,7 @@
           <div style="display: flex; justify-content: space-between; align-items: center">
             <div style="display: flex; align-items: center; gap: 8px">
               <el-icon :size="18" color="#409EFF"><i-ep-folder-opened /></el-icon>
-              <span style="font-weight: bold; font-size: 15px">文档分类选择</span>
+              <span style="font-weight: bold; font-size: 15px">知识库分类选择</span>
             </div>
             <div style="display: flex; gap: 8px">
               <el-button size="small" @click="handleSelectAll">全选</el-button>

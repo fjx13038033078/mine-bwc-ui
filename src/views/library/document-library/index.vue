@@ -34,63 +34,166 @@
       </div>
     </transition>
 
+    <!-- 统计概览 -->
+    <el-row :gutter="15" class="mb-[10px]">
+      <el-col :span="6">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+              <el-icon :size="28"><i-ep-folder /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ Object.keys(groupedDocuments).length }}</div>
+              <div class="stat-label">文档分类</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
+              <el-icon :size="28"><i-ep-document /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ filteredDocuments.length }}</div>
+              <div class="stat-label">文档总数</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
+              <el-icon :size="28"><i-ep-user /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ totalUploaders }}</div>
+              <div class="stat-label">上传人数</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)">
+              <el-icon :size="28"><i-ep-download /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ totalDownloads }}</div>
+              <div class="stat-label">总下载量</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 主内容区域 -->
     <el-card shadow="hover">
       <template #header>
-        <el-row :gutter="10">
-          <el-col :span="1.5">
-            <el-button type="primary" plain icon="Upload" @click="handleUpload">上传文件</el-button>
-          </el-col>
-          <right-toolbar v-model:show-search="showSearch" @query-table="getList"></right-toolbar>
-        </el-row>
+        <div class="card-header">
+          <div class="header-left">
+            <el-icon :size="20" color="#409EFF"><i-ep-folder-opened /></el-icon>
+            <span style="font-weight: bold; font-size: 16px; margin-left: 8px">文档分类管理</span>
+          </div>
+          <div class="header-right">
+            <el-button type="primary" plain icon="Upload" @click="handleUpload">上传知识库</el-button>
+            <el-button type="success" plain icon="FolderAdd" @click="handleAddCategory" style="margin-left: 10px">新增分类</el-button>
+            <right-toolbar v-model:show-search="showSearch" @query-table="getList" style="margin-left: 10px"></right-toolbar>
+          </div>
+        </div>
       </template>
 
-      <el-table v-loading="loading" border :data="documentList">
-        <el-table-column label="文件ID" align="center" prop="documentId" width="120" />
-        <el-table-column label="文件名称" align="left" prop="fileName" min-width="250" show-overflow-tooltip>
-          <template #default="scope">
-            <div class="file-name-cell">
-              <el-icon :size="18" :color="getFileIcon(scope.row.fileType).color">
-                <component :is="getFileIcon(scope.row.fileType).icon" />
-              </el-icon>
-              <span class="file-name">{{ scope.row.fileName }}</span>
+      <!-- 分类折叠面板 -->
+      <el-collapse v-model="activeCategories" class="category-collapse">
+        <el-collapse-item v-for="(docs, category) in groupedDocuments" :key="category" :name="category">
+          <template #title>
+            <div class="collapse-title" @click.stop>
+              <div class="title-left">
+                <el-icon :size="20" :color="getCategoryIconColor(category)"><i-ep-folder /></el-icon>
+                <el-tag :type="getCategoryColor(category)" size="large" style="margin: 0 12px">{{ category }}</el-tag>
+                <el-tag type="info" size="small" effect="plain">{{ docs.length }} 份文档</el-tag>
+                <div class="file-type-stats" style="margin-left: 12px">
+                  <el-tag v-if="getCategoryStats(docs).pdfCount > 0" size="small" effect="plain"> PDF: {{ getCategoryStats(docs).pdfCount }} </el-tag>
+                  <el-tag v-if="getCategoryStats(docs).docxCount > 0" size="small" effect="plain" style="margin-left: 6px">
+                    Word: {{ getCategoryStats(docs).docxCount }}
+                  </el-tag>
+                  <el-tag v-if="getCategoryStats(docs).imageCount > 0" size="small" effect="plain" style="margin-left: 6px">
+                    图片: {{ getCategoryStats(docs).imageCount }}
+                  </el-tag>
+                </div>
+              </div>
+              <div class="title-right" @click.stop>
+                <el-button type="warning" size="small" icon="Edit" @click="handleEditCategory(category)" style="margin-right: 8px">
+                  编辑分类
+                </el-button>
+                <el-button type="danger" size="small" icon="Delete" @click="handleDeleteCategory(category)">删除分类</el-button>
+              </div>
             </div>
           </template>
-        </el-table-column>
-        <el-table-column label="文件分类" align="center" prop="category" width="120">
-          <template #default="scope">
-            <el-tag :type="getCategoryColor(scope.row.category)" size="small">{{ scope.row.category }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="文件类型" align="center" prop="fileType" width="100">
-          <template #default="scope">
-            <el-tag size="small" plain>{{ getFileTypeName(scope.row.fileType) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="文件大小" align="center" prop="fileSize" width="100" />
-        <el-table-column label="上传人" align="center" prop="uploader" width="100" />
-        <el-table-column label="下载次数" align="center" prop="downloadCount" width="100" />
-        <el-table-column label="上传时间" align="center" prop="uploadTime" width="160" />
 
-        <el-table-column label="操作" fixed="right" width="220" class-name="small-padding fixed-width">
-          <template #default="scope">
-            <el-tooltip content="预览" placement="top">
-              <el-button link type="primary" icon="View" @click="handlePreview(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="下载" placement="top">
-              <el-button link type="primary" icon="Download" @click="handleDownload(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="编辑" placement="top">
-              <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="删除" placement="top">
-              <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"></el-button>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-      </el-table>
+          <!-- 文档表格 -->
+          <el-table :data="docs" border :style="{ width: '100%' }">
+            <el-table-column type="index" label="序号" width="60" align="center" />
+            <el-table-column label="文件ID" align="center" prop="documentId" width="120" />
+            <el-table-column label="文件名称" align="left" prop="fileName" min-width="200" show-overflow-tooltip>
+              <template #default="scope">
+                <div class="file-name-cell">
+                  <el-icon :size="18" :color="getFileIcon(scope.row.fileType).color">
+                    <component :is="getFileIcon(scope.row.fileType).icon" />
+                  </el-icon>
+                  <span class="file-name">{{ scope.row.fileName }}</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column label="文件类型" align="center" prop="fileType" width="100">
+              <template #default="scope">
+                <el-tag size="small" effect="plain">{{ scope.row.fileType.toUpperCase() }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="文件大小" align="center" prop="fileSize" width="110" />
+            <el-table-column label="上传人" align="center" prop="uploader" width="100" />
+            <el-table-column label="下载次数" align="center" prop="downloadCount" width="100">
+              <template #default="scope">
+                <el-tag type="success" size="small" effect="plain">{{ scope.row.downloadCount }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="上传时间" align="center" prop="uploadTime" width="160" />
+            <el-table-column label="操作" fixed="right" width="260">
+              <template #default="scope">
+                <el-button link type="primary" icon="View" @click="handlePreview(scope.row)">预览</el-button>
+                <el-button link type="success" icon="Download" @click="handleDownload(scope.row)">下载</el-button>
+                <el-button link type="warning" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
+                <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-collapse-item>
+      </el-collapse>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+      <!-- 空状态 -->
+      <el-empty v-if="Object.keys(groupedDocuments).length === 0" description="暂无文档数据" :image-size="200" />
     </el-card>
+
+    <!-- 新增/编辑分类对话框 -->
+    <el-dialog v-model="categoryDialog.visible" :title="categoryDialog.title" width="500px" append-to-body>
+      <el-form ref="categoryFormRef" :model="categoryForm" :rules="categoryRules" label-width="100px">
+        <el-form-item label="分类名称" prop="name">
+          <el-input v-model="categoryForm.name" placeholder="请输入分类名称" maxlength="50" />
+        </el-form-item>
+        <el-form-item label="分类描述">
+          <el-input v-model="categoryForm.description" type="textarea" :rows="3" placeholder="请输入分类描述" maxlength="200" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitCategory">确 定</el-button>
+          <el-button @click="categoryDialog.visible = false">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <!-- 上传文件对话框 -->
     <el-dialog v-model="uploadDialog.visible" title="上传安全文件" width="600px" append-to-body @close="closeUploadDialog">
@@ -375,10 +478,12 @@ const allDocumentList = ref<DocumentVO[]>([...staticDocumentData]);
 const loading = ref(false);
 const showSearch = ref(true);
 const total = ref(0);
+const activeCategories = ref<string[]>([]);
 
 const queryFormRef = ref<ElFormInstance>();
 const uploadFormRef = ref<ElFormInstance>();
 const editFormRef = ref<ElFormInstance>();
+const categoryFormRef = ref<ElFormInstance>();
 
 const uploadDialog = reactive<DialogOption>({
   visible: false,
@@ -394,6 +499,27 @@ const previewDialog = reactive<DialogOption>({
   visible: false,
   title: ''
 });
+
+const categoryDialog = reactive({
+  visible: false,
+  title: '新增分类',
+  isEdit: false,
+  oldCategoryName: ''
+});
+
+interface CategoryForm {
+  name: string;
+  description?: string;
+}
+
+const categoryForm = ref<CategoryForm>({
+  name: '',
+  description: ''
+});
+
+const categoryRules = {
+  name: [{ required: true, message: '分类名称不能为空', trigger: 'blur' }]
+};
 
 const initUploadForm: UploadForm = {
   fileName: '',
@@ -432,6 +558,43 @@ const data = reactive({
 });
 
 const { queryParams, uploadForm, editForm, uploadRules, editRules, previewData } = toRefs(data);
+
+// 过滤后的文档（应用搜索条件）
+const filteredDocuments = computed(() => {
+  return allDocumentList.value.filter((doc) => {
+    if (queryParams.value.fileName && !doc.fileName.toLowerCase().includes(queryParams.value.fileName.toLowerCase())) {
+      return false;
+    }
+    if (queryParams.value.category && doc.category !== queryParams.value.category) {
+      return false;
+    }
+    if (queryParams.value.fileType && doc.fileType !== queryParams.value.fileType) {
+      return false;
+    }
+    return true;
+  });
+});
+
+// 按分类分组的文档
+const groupedDocuments = computed(() => {
+  const grouped: Record<string, DocumentVO[]> = {};
+  filteredDocuments.value.forEach((doc) => {
+    if (!grouped[doc.category]) {
+      grouped[doc.category] = [];
+    }
+    grouped[doc.category].push(doc);
+  });
+  return grouped;
+});
+
+// 统计数据
+const totalUploaders = computed(() => {
+  return new Set(allDocumentList.value.map((doc) => doc.uploader)).size;
+});
+
+const totalDownloads = computed(() => {
+  return allDocumentList.value.reduce((sum, doc) => sum + doc.downloadCount, 0);
+});
 
 /** 获取文件类型显示名称 */
 const getFileTypeDisplay = (fileType: string): string => {
@@ -484,6 +647,29 @@ const getCategoryColor = (category: string): 'success' | 'warning' | 'info' | 'd
     其他文件: 'info'
   };
   return colorMap[category] || 'info';
+};
+
+/** 获取分类图标颜色 */
+const getCategoryIconColor = (category: string): string => {
+  const colorMap: Record<string, string> = {
+    管理制度: '#409EFF',
+    操作规程: '#67C23A',
+    处罚条例: '#F56C6C',
+    应急预案: '#E6A23C',
+    铜矿安全作业规范库: '#67C23A',
+    铜矿不安全作业行为处理知识库: '#E6A23C',
+    其他文件: '#909399'
+  };
+  return colorMap[category] || '#909399';
+};
+
+/** 获取分类统计 */
+const getCategoryStats = (docs: DocumentVO[]) => {
+  return {
+    pdfCount: docs.filter((d) => d.fileType === 'pdf').length,
+    docxCount: docs.filter((d) => d.fileType === 'docx').length,
+    imageCount: docs.filter((d) => d.fileType === 'image').length
+  };
 };
 
 /** 查询文档列表 */
@@ -699,12 +885,228 @@ const closeEditDialog = () => {
   editFormRef.value?.resetFields();
 };
 
+/** 新增分类 */
+const handleAddCategory = () => {
+  categoryDialog.visible = true;
+  categoryDialog.title = '新增分类';
+  categoryDialog.isEdit = false;
+  categoryForm.value = {
+    name: '',
+    description: ''
+  };
+};
+
+/** 编辑分类 */
+const handleEditCategory = (category: string) => {
+  categoryDialog.visible = true;
+  categoryDialog.title = '编辑分类';
+  categoryDialog.isEdit = true;
+  categoryDialog.oldCategoryName = category;
+  categoryForm.value = {
+    name: category,
+    description: ''
+  };
+};
+
+/** 提交分类 */
+const submitCategory = () => {
+  categoryFormRef.value?.validate((valid: boolean) => {
+    if (valid) {
+      if (categoryDialog.isEdit) {
+        // 编辑分类：批量更新该分类下所有文档的分类名称
+        const oldName = categoryDialog.oldCategoryName;
+        const newName = categoryForm.value.name;
+
+        if (oldName !== newName) {
+          allDocumentList.value.forEach((doc) => {
+            if (doc.category === oldName) {
+              doc.category = newName;
+            }
+          });
+          proxy?.$modal.msgSuccess(`分类"${oldName}"已重命名为"${newName}"`);
+        } else {
+          proxy?.$modal.msgSuccess('分类信息已更新');
+        }
+      } else {
+        // 新增分类：仅添加到建议列表
+        const exists = categorySuggestions.some((item) => item.value === categoryForm.value.name);
+        if (!exists) {
+          categorySuggestions.push({ value: categoryForm.value.name });
+          proxy?.$modal.msgSuccess(`分类"${categoryForm.value.name}"已创建，可在上传文件时使用`);
+        } else {
+          proxy?.$modal.msgWarning('该分类已存在');
+        }
+      }
+
+      categoryDialog.visible = false;
+      getList();
+    }
+  });
+};
+
+/** 删除分类 */
+const handleDeleteCategory = (category: string) => {
+  const docsInCategory = allDocumentList.value.filter((doc) => doc.category === category);
+
+  if (docsInCategory.length > 0) {
+    proxy?.$modal
+      .confirm(`分类"${category}"下有 ${docsInCategory.length} 份文档，删除分类后这些文档将被移动到"其他文件"分类。是否继续？`)
+      .then(() => {
+        // 将该分类下的文档移动到"其他文件"
+        allDocumentList.value.forEach((doc) => {
+          if (doc.category === category) {
+            doc.category = '其他文件';
+          }
+        });
+        proxy?.$modal.msgSuccess(`分类"${category}"已删除，${docsInCategory.length} 份文档已移动到"其他文件"`);
+        getList();
+      })
+      .catch(() => {});
+  } else {
+    proxy?.$modal.msgWarning('该分类下没有文档，无需删除');
+  }
+};
+
 onMounted(() => {
   getList();
+  // 默认展开所有分类
+  setTimeout(() => {
+    activeCategories.value = Object.keys(groupedDocuments.value);
+  }, 100);
 });
 </script>
 
 <style scoped lang="scss">
+.stat-card {
+  height: 100%;
+  border-radius: 10px;
+  transition: all 0.3s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  :deep(.el-card__body) {
+    padding: 20px;
+  }
+
+  .stat-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .stat-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .stat-info {
+      flex: 1;
+
+      .stat-value {
+        font-size: 28px;
+        font-weight: bold;
+        color: #303133;
+        line-height: 1.2;
+        margin-bottom: 6px;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: #909399;
+      }
+    }
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.category-collapse {
+  :deep(.el-collapse-item) {
+    margin-bottom: 16px;
+    border: 1px solid #ebeef5;
+    border-radius: 8px;
+    overflow: hidden;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  :deep(.el-collapse-item__header) {
+    background: #fafafa;
+    padding: 16px 20px;
+    border: none;
+    font-size: 15px;
+    height: auto;
+    line-height: 1.5;
+
+    &:hover {
+      background: #f5f7fa;
+    }
+
+    &.is-active {
+      border-bottom: 1px solid #ebeef5;
+    }
+  }
+
+  :deep(.el-collapse-item__wrap) {
+    border: none;
+  }
+
+  :deep(.el-collapse-item__content) {
+    padding: 16px;
+    background: #fff;
+  }
+
+  .collapse-title {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 20px;
+
+    .title-left {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+
+    .title-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .file-type-stats {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+}
+
 .file-name-cell {
   display: flex;
   align-items: center;
