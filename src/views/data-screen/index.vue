@@ -179,16 +179,16 @@
 
       <!-- 右侧区域 -->
       <div class="content-right">
-        <!-- 部门违规对比 -->
+        <!-- 时段违规分布 -->
         <div class="panel-card">
           <div class="panel-header">
             <div class="screen-panel-title">
               <i class="icon-dot"></i>
-              部门违规对比
+              时段违规分布
             </div>
           </div>
           <div class="panel-body">
-            <div ref="departmentChart" class="chart-container"></div>
+            <div ref="hourlyChart" class="chart-container"></div>
           </div>
         </div>
 
@@ -305,14 +305,14 @@ const processStats = ref([
 // ==================== 图表引用 ====================
 const violationTypeChart = ref<HTMLElement>();
 const deviceStatusChart = ref<HTMLElement>();
-const departmentChart = ref<HTMLElement>();
+const hourlyChart = ref<HTMLElement>();
 const accuracyChart = ref<HTMLElement>();
 const trendChart = ref<HTMLElement>();
 
 // ==================== 图表实例 ====================
 let violationTypeChartInstance: echarts.ECharts;
 let deviceStatusChartInstance: echarts.ECharts;
-let departmentChartInstance: echarts.ECharts;
+let hourlyChartInstance: echarts.ECharts;
 let accuracyChartInstance: echarts.ECharts;
 let trendChartInstance: echarts.ECharts;
 
@@ -417,97 +417,97 @@ const initDeviceStatusChart = () => {
       borderWidth: 1,
       textStyle: {
         color: '#fff'
-      }
+      },
+      formatter: '{b}: {c}台 ({d}%)'
+    },
+    legend: {
+      orient: 'horizontal',
+      bottom: '5%',
+      left: 'center',
+      textStyle: {
+        color: '#fff',
+        fontSize: 12
+      },
+      itemWidth: 12,
+      itemHeight: 12
     },
     series: [
       {
-        type: 'gauge',
-        startAngle: 90,
-        endAngle: -270,
-        radius: '65%',
-        center: ['50%', '55%'],
-        pointer: {
-          show: false
+        type: 'pie',
+        radius: ['45%', '70%'],
+        center: ['50%', '45%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 8,
+          borderColor: '#0a1929',
+          borderWidth: 2
         },
-        progress: {
+        label: {
           show: true,
-          overlap: false,
-          roundCap: true,
-          clip: false,
+          position: 'center',
+          formatter: () => {
+            return '{total|设备总数}\n{value|128}{unit|台}';
+          },
+          rich: {
+            total: {
+              fontSize: 13,
+              color: '#b0c4de',
+              lineHeight: 22
+            },
+            value: {
+              fontSize: 28,
+              fontWeight: 'bold',
+              color: '#00d4ff',
+              lineHeight: 36
+            },
+            unit: {
+              fontSize: 14,
+              color: '#b0c4de'
+            }
+          }
+        },
+        emphasis: {
+          label: {
+            show: false
+          },
           itemStyle: {
-            borderWidth: 0
+            shadowBlur: 15,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
           }
         },
-        axisLine: {
-          lineStyle: {
-            width: 20
-          }
-        },
-        splitLine: {
-          show: false
-        },
-        axisTick: {
-          show: false
-        },
-        axisLabel: {
+        labelLine: {
           show: false
         },
         data: [
           {
-            value: 85,
+            value: 109,
             name: '在线',
-            title: {
-              offsetCenter: ['0%', '-35%'],
-              color: '#52c41a',
-              fontSize: 12
-            },
-            detail: {
-              valueAnimation: true,
-              offsetCenter: ['0%', '-22%'],
-              color: '#52c41a',
-              fontSize: 16,
-              formatter: '109台'
-            },
             itemStyle: {
-              color: '#52c41a'
+              color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+                { offset: 0, color: '#52c41a' },
+                { offset: 1, color: '#73d13d' }
+              ])
             }
           },
           {
-            value: 10,
+            value: 13,
             name: '维护',
-            title: {
-              offsetCenter: ['0%', '0%'],
-              color: '#faad14',
-              fontSize: 12
-            },
-            detail: {
-              valueAnimation: true,
-              offsetCenter: ['0%', '13%'],
-              color: '#faad14',
-              fontSize: 16,
-              formatter: '13台'
-            },
             itemStyle: {
-              color: '#faad14'
+              color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+                { offset: 0, color: '#faad14' },
+                { offset: 1, color: '#ffd666' }
+              ])
             }
           },
           {
-            value: 5,
+            value: 6,
             name: '故障',
-            title: {
-              offsetCenter: ['0%', '35%'],
-              color: '#f5222d',
-              fontSize: 12
-            },
-            detail: {
-              valueAnimation: true,
-              offsetCenter: ['0%', '48%'],
-              color: '#f5222d',
-              fontSize: 16,
-              formatter: '6台'
-            },
             itemStyle: {
-              color: '#f5222d'
+              color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+                { offset: 0, color: '#f5222d' },
+                { offset: 1, color: '#ff4d4f' }
+              ])
             }
           }
         ]
@@ -519,10 +519,10 @@ const initDeviceStatusChart = () => {
 };
 
 // 部门违规对比图
-const initDepartmentChart = () => {
-  if (!departmentChart.value) return;
+const initHourlyChart = () => {
+  if (!hourlyChart.value) return;
 
-  departmentChartInstance = echarts.init(departmentChart.value);
+  hourlyChartInstance = echarts.init(hourlyChart.value);
 
   const option = {
     tooltip: {
@@ -538,20 +538,18 @@ const initDepartmentChart = () => {
       }
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
+      left: '5%',
+      right: '5%',
+      bottom: '8%',
       top: '10%',
       containLabel: true
     },
     xAxis: {
       type: 'category',
-      data: ['采矿部', '安全部', '技术部', '设备部', '后勤部'],
+      data: ['0-4时', '4-8时', '8-12时', '12-16时', '16-20时', '20-24时'],
       axisLabel: {
         color: '#b0c4de',
-        fontSize: 11,
-        interval: 0,
-        rotate: 15
+        fontSize: 11
       },
       axisLine: {
         lineStyle: {
@@ -561,6 +559,11 @@ const initDepartmentChart = () => {
     },
     yAxis: {
       type: 'value',
+      name: '违规数量',
+      nameTextStyle: {
+        color: '#b0c4de',
+        fontSize: 11
+      },
       axisLabel: {
         color: '#b0c4de',
         fontSize: 11
@@ -577,28 +580,39 @@ const initDepartmentChart = () => {
     },
     series: [
       {
-        data: [520, 432, 301, 234, 190],
+        name: '违规数量',
+        data: [8, 12, 45, 78, 62, 23],
         type: 'bar',
         barWidth: '50%',
         itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#00d4ff' },
-            { offset: 1, color: '#0066ff' }
-          ]),
+          color: (params: any) => {
+            const colors = [
+              '#3b82f6',
+              '#3b82f6',
+              '#faad14',
+              '#f5222d',
+              '#faad14',
+              '#3b82f6'
+            ];
+            return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: colors[params.dataIndex] },
+              { offset: 1, color: colors[params.dataIndex] + '80' }
+            ]);
+          },
           borderRadius: [5, 5, 0, 0]
         },
         label: {
           show: true,
           position: 'top',
           color: '#00d4ff',
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: 'bold'
         }
       }
     ]
   };
 
-  departmentChartInstance.setOption(option);
+  hourlyChartInstance.setOption(option);
 };
 
 // AI识别准确率图
@@ -802,7 +816,7 @@ const initTrendChart = () => {
 const handleResize = () => {
   violationTypeChartInstance?.resize();
   deviceStatusChartInstance?.resize();
-  departmentChartInstance?.resize();
+  hourlyChartInstance?.resize();
   accuracyChartInstance?.resize();
   trendChartInstance?.resize();
 };
@@ -817,7 +831,7 @@ onMounted(() => {
   nextTick(() => {
     initViolationTypeChart();
     initDeviceStatusChart();
-    initDepartmentChart();
+    initHourlyChart();
     initAccuracyChart();
     initTrendChart();
 
@@ -832,7 +846,7 @@ onUnmounted(() => {
 
   violationTypeChartInstance?.dispose();
   deviceStatusChartInstance?.dispose();
-  departmentChartInstance?.dispose();
+  hourlyChartInstance?.dispose();
   accuracyChartInstance?.dispose();
   trendChartInstance?.dispose();
 

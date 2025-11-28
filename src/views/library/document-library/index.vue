@@ -13,8 +13,8 @@
                 <el-option label="操作规程" value="操作规程" />
                 <el-option label="处罚条例" value="处罚条例" />
                 <el-option label="应急预案" value="应急预案" />
-                <el-option label="培训教材" value="培训教材" />
-                <el-option label="事故案例" value="事故案例" />
+                <el-option label="铜矿安全作业规范库" value="铜矿安全作业规范库" />
+                <el-option label="铜矿不安全作业行为处理知识库" value="铜矿不安全作业行为处理知识库" />
                 <el-option label="其他文件" value="其他文件" />
               </el-select>
             </el-form-item>
@@ -99,22 +99,21 @@
           <el-input v-model="uploadForm.fileName" placeholder="请输入文件名称" maxlength="100" />
         </el-form-item>
         <el-form-item label="文件分类" prop="category">
-          <el-select v-model="uploadForm.category" placeholder="请选择文件分类" style="width: 100%">
-            <el-option label="管理制度" value="管理制度" />
-            <el-option label="操作规程" value="操作规程" />
-            <el-option label="处罚条例" value="处罚条例" />
-            <el-option label="应急预案" value="应急预案" />
-            <el-option label="培训教材" value="培训教材" />
-            <el-option label="事故案例" value="事故案例" />
-            <el-option label="其他文件" value="其他文件" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="文件类型" prop="fileType">
-          <el-select v-model="uploadForm.fileType" placeholder="请选择文件类型" style="width: 100%">
-            <el-option label="PDF文档" value="pdf" />
-            <el-option label="Word文档" value="docx" />
-            <el-option label="图片文件" value="image" />
-          </el-select>
+          <el-autocomplete
+            v-model="uploadForm.category"
+            :fetch-suggestions="queryCategorySuggestions"
+            placeholder="请输入文件分类（可手动输入或选择建议）"
+            style="width: 100%"
+            clearable
+          >
+            <template #default="{ item }">
+              <div class="suggestion-item">
+                <el-icon><i-ep-folder /></el-icon>
+                <span style="margin-left: 8px">{{ item.value }}</span>
+              </div>
+            </template>
+          </el-autocomplete>
+          <div style="color: #909399; font-size: 12px; margin-top: 4px">💡 可自定义分类名称，或从常用分类中选择</div>
         </el-form-item>
         <el-form-item label="文件上传" prop="file">
           <el-upload class="upload-demo" drag :limit="1" :auto-upload="false" :on-change="handleFileChange" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
@@ -144,15 +143,21 @@
           <el-input v-model="editForm.fileName" placeholder="请输入文件名称" maxlength="100" />
         </el-form-item>
         <el-form-item label="文件分类" prop="category">
-          <el-select v-model="editForm.category" placeholder="请选择文件分类" style="width: 100%">
-            <el-option label="管理制度" value="管理制度" />
-            <el-option label="操作规程" value="操作规程" />
-            <el-option label="处罚条例" value="处罚条例" />
-            <el-option label="应急预案" value="应急预案" />
-            <el-option label="培训教材" value="培训教材" />
-            <el-option label="事故案例" value="事故案例" />
-            <el-option label="其他文件" value="其他文件" />
-          </el-select>
+          <el-autocomplete
+            v-model="editForm.category"
+            :fetch-suggestions="queryCategorySuggestions"
+            placeholder="请输入文件分类（可手动输入或选择建议）"
+            style="width: 100%"
+            clearable
+          >
+            <template #default="{ item }">
+              <div class="suggestion-item">
+                <el-icon><i-ep-folder /></el-icon>
+                <span style="margin-left: 8px">{{ item.value }}</span>
+              </div>
+            </template>
+          </el-autocomplete>
+          <div style="color: #909399; font-size: 12px; margin-top: 4px">💡 可自定义分类名称，或从常用分类中选择</div>
         </el-form-item>
         <el-form-item label="文件描述">
           <el-input v-model="editForm.description" type="textarea" :rows="3" placeholder="请输入文件描述信息" maxlength="200" />
@@ -299,25 +304,25 @@ const staticDocumentData: DocumentVO[] = [
   },
   {
     documentId: 'DOC005',
-    fileName: '吊装作业安全培训教材.pdf',
-    category: '培训教材',
+    fileName: '铜矿吊装作业安全规范汇编.pdf',
+    category: '铜矿安全作业规范库',
     fileType: 'pdf',
     fileSize: '4.5 MB',
     uploader: '孙七',
     downloadCount: 28,
     uploadTime: '2024-01-12 09:15:00',
-    description: '吊装作业人员安全培训使用教材，包含理论和实操内容'
+    description: '铜矿吊装作业安全规范要求汇编，包含标准操作流程和安全注意事项'
   },
   {
     documentId: 'DOC006',
-    fileName: '高处作业典型事故案例分析.pdf',
-    category: '事故案例',
+    fileName: '铜矿高处作业违规行为处理指南.pdf',
+    category: '铜矿不安全作业行为处理知识库',
     fileType: 'pdf',
     fileSize: '5.8 MB',
     uploader: '周八',
     downloadCount: 34,
     uploadTime: '2024-01-12 15:30:00',
-    description: '收集整理了近年来高处作业典型事故案例及分析'
+    description: '收集整理了高处作业违规行为的识别要点和处理建议'
   },
   {
     documentId: 'DOC007',
@@ -332,14 +337,14 @@ const staticDocumentData: DocumentVO[] = [
   },
   {
     documentId: 'DOC008',
-    fileName: '矿井安全警示标识图册.pdf',
-    category: '培训教材',
+    fileName: '铜矿焊割作业安全规范手册.pdf',
+    category: '铜矿安全作业规范库',
     fileType: 'pdf',
     fileSize: '8.3 MB',
     uploader: '郑十',
     downloadCount: 29,
     uploadTime: '2024-01-13 16:45:00',
-    description: '包含矿井内所有安全警示标识的图片和说明'
+    description: '铜矿焊割作业的详细安全规范，包含气瓶使用、动火管理等内容'
   },
   {
     documentId: 'DOC009',
@@ -417,8 +422,7 @@ const data = reactive({
   editForm: { ...initEditForm },
   uploadRules: {
     fileName: [{ required: true, message: '文件名称不能为空', trigger: 'blur' }],
-    category: [{ required: true, message: '文件分类不能为空', trigger: 'change' }],
-    fileType: [{ required: true, message: '文件类型不能为空', trigger: 'change' }]
+    category: [{ required: true, message: '文件分类不能为空', trigger: 'change' }]
   },
   editRules: {
     fileName: [{ required: true, message: '文件名称不能为空', trigger: 'blur' }],
@@ -428,6 +432,25 @@ const data = reactive({
 });
 
 const { queryParams, uploadForm, editForm, uploadRules, editRules, previewData } = toRefs(data);
+
+/** 获取文件类型显示名称 */
+const getFileTypeDisplay = (fileType: string): string => {
+  const displayMap: Record<string, string> = {
+    'pdf': 'PDF文档',
+    'docx': 'Word文档',
+    'image': '图片文件',
+    'other': '其他文件'
+  };
+  return displayMap[fileType] || '未知类型';
+};
+
+/** 文件类型显示名称（计算属性） */
+const fileTypeDisplay = computed(() => {
+  if (!uploadForm.value.fileType) {
+    return '';
+  }
+  return getFileTypeDisplay(uploadForm.value.fileType);
+});
 
 /** 获取文件图标 */
 const getFileIcon = (fileType: string) => {
@@ -450,17 +473,17 @@ const getFileTypeName = (fileType: string) => {
 };
 
 /** 获取分类颜色 */
-const getCategoryColor = (category: string) => {
-  const colorMap: Record<string, string> = {
+const getCategoryColor = (category: string): 'success' | 'warning' | 'info' | 'danger' | 'primary' => {
+  const colorMap: Record<string, 'success' | 'warning' | 'info' | 'danger' | 'primary'> = {
     管理制度: 'primary',
     操作规程: 'success',
     处罚条例: 'danger',
     应急预案: 'warning',
-    培训教材: 'info',
-    事故案例: 'danger',
-    其他文件: ''
+    铜矿安全作业规范库: 'success',
+    铜矿不安全作业行为处理知识库: 'warning',
+    其他文件: 'info'
   };
-  return colorMap[category] || '';
+  return colorMap[category] || 'info';
 };
 
 /** 查询文档列表 */
@@ -504,15 +527,67 @@ const resetQuery = () => {
   handleQuery();
 };
 
+/** 文件分类建议 */
+const categorySuggestions = [
+  { value: '管理制度' },
+  { value: '操作规程' },
+  { value: '处罚条例' },
+  { value: '应急预案' },
+  { value: '铜矿安全作业规范库' },
+  { value: '铜矿不安全作业行为处理知识库' },
+  { value: '培训教材' },
+  { value: '事故案例' },
+  { value: '安全检查表' },
+  { value: '风险评估报告' },
+  { value: '其他文件' }
+];
+
+/** 查询分类建议 */
+const queryCategorySuggestions = (queryString: string, cb: any) => {
+  const results = queryString
+    ? categorySuggestions.filter((item) => item.value.toLowerCase().includes(queryString.toLowerCase()))
+    : categorySuggestions;
+  cb(results);
+};
+
 /** 上传文件 */
 const handleUpload = () => {
   uploadForm.value = { ...initUploadForm };
   uploadDialog.visible = true;
 };
 
+/** 根据文件扩展名获取文件类型 */
+const getFileType = (fileName: string): string => {
+  const ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+  const typeMap: Record<string, string> = {
+    '.pdf': 'pdf',
+    '.doc': 'docx',
+    '.docx': 'docx',
+    '.jpg': 'image',
+    '.jpeg': 'image',
+    '.png': 'image',
+    '.gif': 'image',
+    '.bmp': 'image',
+    '.webp': 'image'
+  };
+  return typeMap[ext] || 'other';
+};
+
 /** 文件选择变化 */
 const handleFileChange = (file: any) => {
   uploadForm.value.file = file;
+
+  // 自动识别文件类型
+  if (file && file.name) {
+    const fileType = getFileType(file.name);
+    uploadForm.value.fileType = fileType;
+
+    // 自动填充文件名（去掉扩展名）
+    if (!uploadForm.value.fileName) {
+      const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.'));
+      uploadForm.value.fileName = nameWithoutExt;
+    }
+  }
 };
 
 /** 提交上传 */
@@ -673,6 +748,22 @@ onMounted(() => {
 
   .el-upload-dragger {
     width: 100%;
+  }
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+
+  .el-icon {
+    color: #409eff;
+    font-size: 16px;
+  }
+
+  span {
+    color: #606266;
+    font-size: 14px;
   }
 }
 </style>

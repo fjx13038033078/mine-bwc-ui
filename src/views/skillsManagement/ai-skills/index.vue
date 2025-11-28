@@ -231,44 +231,162 @@
       </template>
     </el-dialog>
 
-    <!-- 关联知识库对话框 -->
-    <el-dialog v-model="knowledgeDialog.visible" title="关联知识库" width="900px" append-to-body>
-      <el-alert title="知识库关联说明" type="info" :closable="false" style="margin-bottom: 16px">
-        <p>该技能关联了以下安全规范和处理知识，AI识别时将参考这些知识进行判定和处理建议。</p>
+    <!-- 关联文档库对话框 -->
+    <el-dialog v-model="knowledgeDialog.visible" :title="`【${currentSkillName}】关联文档库`" width="1100px" append-to-body>
+      <!-- 顶部说明 -->
+      <el-alert type="info" :closable="false" style="margin-bottom: 20px">
+        <template #title>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <el-icon :size="18"><i-ep-info-filled /></el-icon>
+            <span style="font-weight: bold">文档关联说明</span>
+          </div>
+        </template>
+        <p style="margin: 8px 0 0 0; line-height: 1.6">
+          选择文档分类，系统将显示该分类下的所有文档。AI识别时将参考这些文档知识进行判定和处理。
+          支持同时选择多个分类，便于综合管理相关文档资料。
+        </p>
       </el-alert>
 
-      <el-tabs v-model="activeTab">
-        <el-tab-pane label="安全作业规范" name="regulations">
-          <el-table :data="relatedRegulations" border style="margin-top: 16px">
-            <el-table-column label="规范ID" prop="regulationId" width="120" />
-            <el-table-column label="作业类型" prop="workType" width="120">
-              <template #default="scope">
-                <el-tag size="small">{{ scope.row.workType }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="规范要求" prop="standards" show-overflow-tooltip />
-            <el-table-column label="常见违规" prop="violations" show-overflow-tooltip />
-          </el-table>
-        </el-tab-pane>
+      <!-- 统计概览 -->
+      <el-row :gutter="15" style="margin-bottom: 20px">
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-mini-card">
+            <div class="stat-mini-content">
+              <div class="stat-mini-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+                <el-icon :size="24"><i-ep-folder /></el-icon>
+              </div>
+              <div class="stat-mini-info">
+                <div class="stat-mini-value">{{ documentCategories.length }}</div>
+                <div class="stat-mini-label">可选分类</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-mini-card">
+            <div class="stat-mini-content">
+              <div class="stat-mini-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
+                <el-icon :size="24"><i-ep-select /></el-icon>
+              </div>
+              <div class="stat-mini-info">
+                <div class="stat-mini-value">{{ selectedCategories.length }}</div>
+                <div class="stat-mini-label">已选分类</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-mini-card">
+            <div class="stat-mini-content">
+              <div class="stat-mini-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
+                <el-icon :size="24"><i-ep-document /></el-icon>
+              </div>
+              <div class="stat-mini-info">
+                <div class="stat-mini-value">{{ allDocuments.length }}</div>
+                <div class="stat-mini-label">文档总数</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-mini-card">
+            <div class="stat-mini-content">
+              <div class="stat-mini-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)">
+                <el-icon :size="24"><i-ep-files /></el-icon>
+              </div>
+              <div class="stat-mini-info">
+                <div class="stat-mini-value">{{ filteredDocuments.length }}</div>
+                <div class="stat-mini-label">关联文档</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
 
-        <el-tab-pane label="违规处理知识" name="handling">
-          <el-table :data="relatedHandling" border style="margin-top: 16px">
-            <el-table-column label="知识ID" prop="knowledgeId" width="120" />
-            <el-table-column label="违规行为" prop="violationName" width="150" />
-            <el-table-column label="严重等级" prop="severity" width="100">
-              <template #default="scope">
-                <el-tag :type="getSeverityType(scope.row.severity)" size="small">
-                  {{ scope.row.severity }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="立即处理措施" prop="immediateAction" show-overflow-tooltip />
-          </el-table>
-        </el-tab-pane>
-      </el-tabs>
+      <!-- 文档分类选择 -->
+      <el-card shadow="hover" style="margin-bottom: 20px">
+        <template #header>
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <el-icon :size="18" color="#409EFF"><i-ep-folder-opened /></el-icon>
+              <span style="font-weight: bold; font-size: 15px">文档分类选择</span>
+            </div>
+            <div style="display: flex; gap: 8px">
+              <el-button size="small" @click="handleSelectAll">全选</el-button>
+              <el-button size="small" @click="handleClearAll">清空</el-button>
+            </div>
+          </div>
+        </template>
+        <el-checkbox-group v-model="selectedCategories" @change="handleCategoryChange">
+          <el-row :gutter="12">
+            <el-col :span="6" v-for="category in documentCategories" :key="category">
+              <div class="category-checkbox-wrapper">
+                <el-checkbox :label="category">
+                  <div style="display: flex; align-items: center; gap: 6px">
+                    <el-tag size="small" :type="getCategoryTagType(category)">{{ category }}</el-tag>
+                    <span style="color: #909399; font-size: 12px">({{ getCategoryDocCount(category) }})</span>
+                  </div>
+                </el-checkbox>
+              </div>
+            </el-col>
+          </el-row>
+        </el-checkbox-group>
+      </el-card>
+
+      <!-- 关联文档列表 -->
+      <el-card shadow="hover">
+        <template #header>
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <el-icon :size="18" color="#67C23A"><i-ep-document-copy /></el-icon>
+              <span style="font-weight: bold; font-size: 15px">关联文档列表</span>
+              <el-tag v-if="filteredDocuments.length > 0" size="small" type="success">
+                {{ filteredDocuments.length }} 份文档
+              </el-tag>
+            </div>
+          </div>
+        </template>
+
+        <el-table :data="filteredDocuments" border max-height="350" v-if="filteredDocuments.length > 0">
+          <el-table-column type="index" label="序号" width="60" align="center" />
+          <el-table-column label="文档ID" prop="documentId" width="110" align="center" />
+          <el-table-column label="文档名称" prop="fileName" min-width="180" show-overflow-tooltip>
+            <template #default="scope">
+              <div style="display: flex; align-items: center; gap: 6px">
+                <el-icon color="#409EFF"><i-ep-document /></el-icon>
+                <span>{{ scope.row.fileName }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="文件分类" prop="category" width="180" align="center">
+            <template #default="scope">
+              <el-tag :type="getDocCategoryColor(scope.row.category)" size="small">
+                {{ scope.row.category }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="文件类型" prop="fileType" width="100" align="center">
+            <template #default="scope">
+              <el-tag size="small" effect="plain">{{ scope.row.fileType.toUpperCase() }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="文件大小" prop="fileSize" width="100" align="center" />
+          <el-table-column label="上传时间" prop="uploadTime" width="160" align="center" />
+        </el-table>
+
+        <el-empty v-else description="请选择文档分类查看相关文档" :image-size="120">
+          <template #image>
+            <el-icon :size="80" color="#C0C4CC"><i-ep-folder-opened /></el-icon>
+          </template>
+        </el-empty>
+      </el-card>
 
       <template #footer>
         <div class="dialog-footer">
+          <el-button type="primary" @click="knowledgeDialog.visible = false">
+            <el-icon><i-ep-check /></el-icon>
+            <span>确 定</span>
+          </el-button>
           <el-button @click="knowledgeDialog.visible = false">关 闭</el-button>
         </div>
       </template>
@@ -394,10 +512,13 @@ const data = reactive({
   activeTab: 'regulations',
   relatedRegulations: [] as any[],
   relatedHandling: [] as any[],
-  relatedDevices: [] as any[]
+  relatedDevices: [] as any[],
+  // 文档相关数据
+  selectedCategories: [] as string[],
+  allDocuments: [] as any[]
 });
 
-const { queryParams, viewData, currentSkillName, activeTab, relatedRegulations, relatedHandling, relatedDevices } = toRefs(data);
+const { queryParams, viewData, currentSkillName, activeTab, relatedRegulations, relatedHandling, relatedDevices, selectedCategories, allDocuments } = toRefs(data);
 
 // 计算统计数据
 const enabledCount = computed(() => {
@@ -412,6 +533,29 @@ const totalDeviceUsage = computed(() => {
   return allSkillList.value.reduce((sum, skill) => sum + skill.deviceUsageCount, 0);
 });
 
+// 文档分类列表
+const documentCategories = ref([
+  '管理制度',
+  '操作规程',
+  '处罚条例',
+  '应急预案',
+  '铜矿安全作业规范库',
+  '铜矿不安全作业行为处理知识库',
+  '培训教材',
+  '事故案例',
+  '安全检查表',
+  '风险评估报告',
+  '其他文件'
+]);
+
+// 根据选中的分类过滤文档
+const filteredDocuments = computed(() => {
+  if (selectedCategories.value.length === 0) {
+    return [];
+  }
+  return allDocuments.value.filter((doc) => selectedCategories.value.includes(doc.category));
+});
+
 /** 获取严重等级类型 */
 const getSeverityType = (severity: string): 'success' | 'info' | 'warning' | 'danger' => {
   const map: Record<string, 'success' | 'info' | 'warning' | 'danger'> = {
@@ -421,6 +565,58 @@ const getSeverityType = (severity: string): 'success' | 'info' | 'warning' | 'da
     特别严重: 'danger'
   };
   return map[severity] || 'info';
+};
+
+/** 获取分类标签类型 */
+const getCategoryTagType = (category: string): 'success' | 'info' | 'warning' | 'danger' | 'primary' => {
+  const map: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'primary'> = {
+    管理制度: 'primary',
+    操作规程: 'success',
+    处罚条例: 'danger',
+    应急预案: 'warning',
+    铜矿安全作业规范库: 'success',
+    铜矿不安全作业行为处理知识库: 'warning',
+    培训教材: 'info',
+    事故案例: 'danger',
+    安全检查表: 'success',
+    风险评估报告: 'warning',
+    其他文件: 'info'
+  };
+  return map[category] || 'info';
+};
+
+/** 获取文档分类颜色 */
+const getDocCategoryColor = (category: string): 'success' | 'warning' | 'info' | 'danger' | 'primary' => {
+  const colorMap: Record<string, 'success' | 'warning' | 'info' | 'danger' | 'primary'> = {
+    管理制度: 'primary',
+    操作规程: 'success',
+    处罚条例: 'danger',
+    应急预案: 'warning',
+    铜矿安全作业规范库: 'success',
+    铜矿不安全作业行为处理知识库: 'warning',
+    其他文件: 'info'
+  };
+  return colorMap[category] || 'info';
+};
+
+/** 处理分类变化 */
+const handleCategoryChange = (value: string[]) => {
+  console.log('选中的分类：', value);
+};
+
+/** 全选分类 */
+const handleSelectAll = () => {
+  selectedCategories.value = [...documentCategories.value];
+};
+
+/** 清空分类 */
+const handleClearAll = () => {
+  selectedCategories.value = [];
+};
+
+/** 获取分类下的文档数量 */
+const getCategoryDocCount = (category: string) => {
+  return allDocuments.value.filter((doc) => doc.category === category).length;
 };
 
 /** 查询技能列表 */
@@ -589,6 +785,109 @@ const handleViewKnowledge = (row: AISkillVO) => {
     }
   ];
 
+  // 模拟文档库数据
+  allDocuments.value = [
+    {
+      documentId: 'DOC001',
+      fileName: '矿井安全管理制度.pdf',
+      category: '管理制度',
+      fileType: 'pdf',
+      fileSize: '2.3 MB',
+      uploadTime: '2024-01-10 09:00:00'
+    },
+    {
+      documentId: 'DOC002',
+      fileName: '焊割作业操作规程.pdf',
+      category: '操作规程',
+      fileType: 'pdf',
+      fileSize: '1.8 MB',
+      uploadTime: '2024-01-11 10:30:00'
+    },
+    {
+      documentId: 'DOC003',
+      fileName: '安全生产违章处罚条例.docx',
+      category: '处罚条例',
+      fileType: 'docx',
+      fileSize: '856 KB',
+      uploadTime: '2024-01-12 14:15:00'
+    },
+    {
+      documentId: 'DOC004',
+      fileName: '矿井火灾事故应急预案.docx',
+      category: '应急预案',
+      fileType: 'docx',
+      fileSize: '3.2 MB',
+      uploadTime: '2024-01-11 14:20:00'
+    },
+    {
+      documentId: 'DOC005',
+      fileName: '铜矿吊装作业安全规范汇编.pdf',
+      category: '铜矿安全作业规范库',
+      fileType: 'pdf',
+      fileSize: '4.5 MB',
+      uploadTime: '2024-01-12 09:15:00'
+    },
+    {
+      documentId: 'DOC006',
+      fileName: '铜矿高处作业违规行为处理指南.pdf',
+      category: '铜矿不安全作业行为处理知识库',
+      fileType: 'pdf',
+      fileSize: '5.8 MB',
+      uploadTime: '2024-01-12 15:30:00'
+    },
+    {
+      documentId: 'DOC007',
+      fileName: '个人防护用品使用规范.docx',
+      category: '操作规程',
+      fileType: 'docx',
+      fileSize: '1.2 MB',
+      uploadTime: '2024-01-13 10:00:00'
+    },
+    {
+      documentId: 'DOC008',
+      fileName: '铜矿焊割作业安全规范手册.pdf',
+      category: '铜矿安全作业规范库',
+      fileType: 'pdf',
+      fileSize: '8.3 MB',
+      uploadTime: '2024-01-13 16:45:00'
+    },
+    {
+      documentId: 'DOC009',
+      fileName: '安全生产培训教材.pdf',
+      category: '培训教材',
+      fileType: 'pdf',
+      fileSize: '12.5 MB',
+      uploadTime: '2024-01-14 09:00:00'
+    },
+    {
+      documentId: 'DOC010',
+      fileName: '典型事故案例分析.pdf',
+      category: '事故案例',
+      fileType: 'pdf',
+      fileSize: '6.7 MB',
+      uploadTime: '2024-01-15 11:20:00'
+    },
+    {
+      documentId: 'DOC011',
+      fileName: '安全检查表（焊割作业）.xlsx',
+      category: '安全检查表',
+      fileType: 'xlsx',
+      fileSize: '245 KB',
+      uploadTime: '2024-01-16 08:30:00'
+    },
+    {
+      documentId: 'DOC012',
+      fileName: '风险评估报告-铜矿采掘.pdf',
+      category: '风险评估报告',
+      fileType: 'pdf',
+      fileSize: '4.2 MB',
+      uploadTime: '2024-01-17 14:00:00'
+    }
+  ];
+
+  // 默认选中与技能相关的分类
+  selectedCategories.value = ['铜矿安全作业规范库', '铜矿不安全作业行为处理知识库'];
+
   knowledgeDialog.visible = true;
 };
 
@@ -677,6 +976,74 @@ onMounted(() => {
   .skill-name {
     flex: 1;
     font-weight: 500;
+  }
+}
+
+.stat-mini-card {
+  height: 100%;
+  border-radius: 8px;
+  transition: all 0.3s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  :deep(.el-card__body) {
+    padding: 16px;
+  }
+
+  .stat-mini-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .stat-mini-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .stat-mini-info {
+      flex: 1;
+
+      .stat-mini-value {
+        font-size: 22px;
+        font-weight: bold;
+        color: #303133;
+        line-height: 1.2;
+        margin-bottom: 4px;
+      }
+
+      .stat-mini-label {
+        font-size: 13px;
+        color: #909399;
+      }
+    }
+  }
+}
+
+.category-checkbox-wrapper {
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.3s;
+  margin-bottom: 8px;
+
+  &:hover {
+    background-color: #f5f7fa;
+  }
+
+  :deep(.el-checkbox) {
+    width: 100%;
+
+    .el-checkbox__label {
+      width: 100%;
+    }
   }
 }
 </style>
