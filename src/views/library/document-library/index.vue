@@ -44,7 +44,7 @@
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ Object.keys(groupedDocuments).length }}</div>
-              <div class="stat-label">文档分类</div>
+              <div class="stat-label">知识库数量</div>
             </div>
           </div>
         </el-card>
@@ -96,23 +96,23 @@
         <div class="card-header">
           <div class="header-left">
             <el-icon :size="20" color="#409EFF"><i-ep-folder-opened /></el-icon>
-            <span style="font-weight: bold; font-size: 16px; margin-left: 8px">文档分类管理</span>
+            <span style="font-weight: bold; font-size: 16px; margin-left: 8px">知识库管理</span>
           </div>
           <div class="header-right">
-            <el-button type="primary" plain icon="Upload" @click="handleUpload">上传知识库</el-button>
-            <el-button type="success" plain icon="FolderAdd" @click="handleAddCategory" style="margin-left: 10px">新增分类</el-button>
+            <el-button type="primary" plain icon="Upload" @click="handleUpload">上传文档</el-button>
+            <el-button type="success" plain icon="FolderAdd" @click="handleAddCategory" style="margin-left: 10px">新增知识库</el-button>
             <right-toolbar v-model:show-search="showSearch" @query-table="getList" style="margin-left: 10px"></right-toolbar>
           </div>
         </div>
       </template>
 
-      <!-- 分类折叠面板 -->
+      <!-- 知识库折叠面板 -->
       <el-collapse v-model="activeCategories" class="category-collapse">
-        <el-collapse-item v-for="(docs, category) in groupedDocuments" :key="category" :name="category">
+        <el-collapse-item v-for="(docs, category) in pagedGroupedDocuments" :key="category" :name="category">
           <template #title>
             <div class="collapse-title" @click.stop>
               <div class="title-left">
-                <el-icon :size="20" :color="getCategoryIconColor(category)"><i-ep-folder /></el-icon>
+                <el-icon :size="20" :color="getCategoryIconColor(category)"><i-ep-collection /></el-icon>
                 <el-tag :type="getCategoryColor(category)" size="large" style="margin: 0 12px">{{ category }}</el-tag>
                 <el-tag type="info" size="small" effect="plain">{{ docs.length }} 份文档</el-tag>
                 <div class="file-type-stats" style="margin-left: 12px">
@@ -127,9 +127,9 @@
               </div>
               <div class="title-right" @click.stop>
                 <el-button type="warning" size="small" icon="Edit" @click="handleEditCategory(category)" style="margin-right: 8px">
-                  编辑分类
+                  编辑知识库
                 </el-button>
-                <el-button type="danger" size="small" icon="Delete" @click="handleDeleteCategory(category)">删除分类</el-button>
+                <el-button type="danger" size="small" icon="Delete" @click="handleDeleteCategory(category)">删除知识库</el-button>
               </div>
             </div>
           </template>
@@ -161,11 +161,10 @@
               </template>
             </el-table-column>
             <el-table-column label="上传时间" align="center" prop="uploadTime" width="160" />
-            <el-table-column label="操作" fixed="right" width="260">
+            <el-table-column label="操作" fixed="right" width="200">
               <template #default="scope">
                 <el-button link type="primary" icon="View" @click="handlePreview(scope.row)">预览</el-button>
                 <el-button link type="success" icon="Download" @click="handleDownload(scope.row)">下载</el-button>
-                <el-button link type="warning" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
                 <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
               </template>
             </el-table-column>
@@ -174,17 +173,26 @@
       </el-collapse>
 
       <!-- 空状态 -->
-      <el-empty v-if="Object.keys(groupedDocuments).length === 0" description="暂无文档数据" :image-size="200" />
+      <el-empty v-if="Object.keys(pagedGroupedDocuments).length === 0" description="暂无文档数据" :image-size="200" />
+
+      <!-- 分页 -->
+      <pagination
+        v-show="categoryTotal > 0"
+        v-model:page="categoryPageNum"
+        v-model:limit="categoryPageSize"
+        :total="categoryTotal"
+        @pagination="handleCategoryPageChange"
+      />
     </el-card>
 
-    <!-- 新增/编辑分类对话框 -->
+    <!-- 新增/编辑知识库对话框 -->
     <el-dialog v-model="categoryDialog.visible" :title="categoryDialog.title" width="500px" append-to-body>
-      <el-form ref="categoryFormRef" :model="categoryForm" :rules="categoryRules" label-width="100px">
-        <el-form-item label="分类名称" prop="name">
-          <el-input v-model="categoryForm.name" placeholder="请输入分类名称" maxlength="50" />
+      <el-form ref="categoryFormRef" :model="categoryForm" :rules="categoryRules" label-width="120px">
+        <el-form-item label="知识库名称" prop="name">
+          <el-input v-model="categoryForm.name" placeholder="请输入知识库名称" maxlength="50" />
         </el-form-item>
-        <el-form-item label="分类描述">
-          <el-input v-model="categoryForm.description" type="textarea" :rows="3" placeholder="请输入分类描述" maxlength="200" />
+        <el-form-item label="知识库描述">
+          <el-input v-model="categoryForm.description" type="textarea" :rows="3" placeholder="请输入知识库描述" maxlength="200" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -235,41 +243,6 @@
         <div class="dialog-footer">
           <el-button type="primary" @click="submitUpload">确认上传</el-button>
           <el-button @click="closeUploadDialog">取 消</el-button>
-        </div>
-      </template>
-    </el-dialog>
-
-    <!-- 编辑文件信息对话框 -->
-    <el-dialog v-model="editDialog.visible" title="编辑文件信息" width="600px" append-to-body @close="closeEditDialog">
-      <el-form ref="editFormRef" :model="editForm" :rules="editRules" label-width="100px">
-        <el-form-item label="文件名称" prop="fileName">
-          <el-input v-model="editForm.fileName" placeholder="请输入文件名称" maxlength="100" />
-        </el-form-item>
-        <el-form-item label="文件分类" prop="category">
-          <el-autocomplete
-            v-model="editForm.category"
-            :fetch-suggestions="queryCategorySuggestions"
-            placeholder="请输入文件分类（可手动输入或选择建议）"
-            style="width: 100%"
-            clearable
-          >
-            <template #default="{ item }">
-              <div class="suggestion-item">
-                <el-icon><i-ep-folder /></el-icon>
-                <span style="margin-left: 8px">{{ item.value }}</span>
-              </div>
-            </template>
-          </el-autocomplete>
-          <div style="color: #909399; font-size: 12px; margin-top: 4px">💡 可自定义分类名称，或从常用分类中选择</div>
-        </el-form-item>
-        <el-form-item label="文件描述">
-          <el-input v-model="editForm.description" type="textarea" :rows="3" placeholder="请输入文件描述信息" maxlength="200" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitEdit">确 定</el-button>
-          <el-button @click="closeEditDialog">取 消</el-button>
         </div>
       </template>
     </el-dialog>
@@ -341,13 +314,6 @@ interface UploadForm {
   category: string;
   fileType: string;
   file: any;
-  description?: string;
-}
-
-interface EditForm {
-  documentId: string;
-  fileName: string;
-  category: string;
   description?: string;
 }
 
@@ -478,19 +444,16 @@ const allDocumentList = ref<DocumentVO[]>([...staticDocumentData]);
 const loading = ref(false);
 const showSearch = ref(true);
 const total = ref(0);
-const activeCategories = ref<string[]>([]);
+const activeCategories = ref<string[]>([]); // 默认折叠，空数组
+const categoryPageNum = ref(1); // 知识库分页页码
+const categoryPageSize = ref(10); // 每页显示10个知识库
+const categoryTotal = ref(0); // 知识库总数
 
 const queryFormRef = ref<ElFormInstance>();
 const uploadFormRef = ref<ElFormInstance>();
-const editFormRef = ref<ElFormInstance>();
 const categoryFormRef = ref<ElFormInstance>();
 
 const uploadDialog = reactive<DialogOption>({
-  visible: false,
-  title: ''
-});
-
-const editDialog = reactive<DialogOption>({
   visible: false,
   title: ''
 });
@@ -502,7 +465,7 @@ const previewDialog = reactive<DialogOption>({
 
 const categoryDialog = reactive({
   visible: false,
-  title: '新增分类',
+  title: '新增知识库',
   isEdit: false,
   oldCategoryName: ''
 });
@@ -518,7 +481,7 @@ const categoryForm = ref<CategoryForm>({
 });
 
 const categoryRules = {
-  name: [{ required: true, message: '分类名称不能为空', trigger: 'blur' }]
+  name: [{ required: true, message: '知识库名称不能为空', trigger: 'blur' }]
 };
 
 const initUploadForm: UploadForm = {
@@ -526,13 +489,6 @@ const initUploadForm: UploadForm = {
   category: '',
   fileType: '',
   file: null,
-  description: ''
-};
-
-const initEditForm: EditForm = {
-  documentId: '',
-  fileName: '',
-  category: '',
   description: ''
 };
 
@@ -545,19 +501,14 @@ const data = reactive({
     fileType: ''
   } as DocumentQuery,
   uploadForm: { ...initUploadForm },
-  editForm: { ...initEditForm },
   uploadRules: {
-    fileName: [{ required: true, message: '文件名称不能为空', trigger: 'blur' }],
-    category: [{ required: true, message: '文件分类不能为空', trigger: 'change' }]
-  },
-  editRules: {
     fileName: [{ required: true, message: '文件名称不能为空', trigger: 'blur' }],
     category: [{ required: true, message: '文件分类不能为空', trigger: 'change' }]
   },
   previewData: {} as DocumentVO
 });
 
-const { queryParams, uploadForm, editForm, uploadRules, editRules, previewData } = toRefs(data);
+const { queryParams, uploadForm, uploadRules, previewData } = toRefs(data);
 
 // 过滤后的文档（应用搜索条件）
 const filteredDocuments = computed(() => {
@@ -586,6 +537,36 @@ const groupedDocuments = computed(() => {
   });
   return grouped;
 });
+
+// 知识库名称列表（用于分页）
+const categoryNames = computed(() => {
+  return Object.keys(groupedDocuments.value);
+});
+
+// 分页后的知识库名称
+const pagedCategoryNames = computed(() => {
+  const start = (categoryPageNum.value - 1) * categoryPageSize.value;
+  const end = start + categoryPageSize.value;
+  return categoryNames.value.slice(start, end);
+});
+
+// 分页后的分组文档数据
+const pagedGroupedDocuments = computed(() => {
+  const paged: Record<string, DocumentVO[]> = {};
+  pagedCategoryNames.value.forEach((name) => {
+    paged[name] = groupedDocuments.value[name];
+  });
+  return paged;
+});
+
+// 更新知识库总数
+watch(
+  categoryNames,
+  (newVal) => {
+    categoryTotal.value = newVal.length;
+  },
+  { immediate: true }
+);
 
 // 统计数据
 const totalUploaders = computed(() => {
@@ -831,34 +812,6 @@ const handleDownload = (row: DocumentVO) => {
   getList();
 };
 
-/** 编辑文件信息 */
-const handleUpdate = (row: DocumentVO) => {
-  editForm.value = {
-    documentId: row.documentId,
-    fileName: row.fileName,
-    category: row.category,
-    description: row.description || ''
-  };
-  editDialog.visible = true;
-};
-
-/** 提交编辑 */
-const submitEdit = () => {
-  editFormRef.value?.validate(async (valid: boolean) => {
-    if (valid) {
-      const index = allDocumentList.value.findIndex((item) => item.documentId === editForm.value.documentId);
-      if (index !== -1) {
-        allDocumentList.value[index].fileName = editForm.value.fileName;
-        allDocumentList.value[index].category = editForm.value.category;
-        allDocumentList.value[index].description = editForm.value.description;
-      }
-      proxy?.$modal.msgSuccess('修改成功');
-      editDialog.visible = false;
-      await getList();
-    }
-  });
-};
-
 /** 删除文件 */
 const handleDelete = (row: DocumentVO) => {
   proxy?.$modal
@@ -878,17 +831,10 @@ const closeUploadDialog = () => {
   uploadFormRef.value?.resetFields();
 };
 
-/** 关闭编辑对话框 */
-const closeEditDialog = () => {
-  editDialog.visible = false;
-  editForm.value = { ...initEditForm };
-  editFormRef.value?.resetFields();
-};
-
-/** 新增分类 */
+/** 新增知识库 */
 const handleAddCategory = () => {
   categoryDialog.visible = true;
-  categoryDialog.title = '新增分类';
+  categoryDialog.title = '新增知识库';
   categoryDialog.isEdit = false;
   categoryForm.value = {
     name: '',
@@ -896,10 +842,10 @@ const handleAddCategory = () => {
   };
 };
 
-/** 编辑分类 */
+/** 编辑知识库 */
 const handleEditCategory = (category: string) => {
   categoryDialog.visible = true;
-  categoryDialog.title = '编辑分类';
+  categoryDialog.title = '编辑知识库';
   categoryDialog.isEdit = true;
   categoryDialog.oldCategoryName = category;
   categoryForm.value = {
@@ -923,18 +869,18 @@ const submitCategory = () => {
               doc.category = newName;
             }
           });
-          proxy?.$modal.msgSuccess(`分类"${oldName}"已重命名为"${newName}"`);
+          proxy?.$modal.msgSuccess(`知识库"${oldName}"已重命名为"${newName}"`);
         } else {
-          proxy?.$modal.msgSuccess('分类信息已更新');
+          proxy?.$modal.msgSuccess('知识库信息已更新');
         }
       } else {
-        // 新增分类：仅添加到建议列表
+        // 新增知识库：仅添加到建议列表
         const exists = categorySuggestions.some((item) => item.value === categoryForm.value.name);
         if (!exists) {
           categorySuggestions.push({ value: categoryForm.value.name });
-          proxy?.$modal.msgSuccess(`分类"${categoryForm.value.name}"已创建，可在上传文件时使用`);
+          proxy?.$modal.msgSuccess(`知识库"${categoryForm.value.name}"已创建，可在上传文件时使用`);
         } else {
-          proxy?.$modal.msgWarning('该分类已存在');
+          proxy?.$modal.msgWarning('该知识库已存在');
         }
       }
 
@@ -944,35 +890,38 @@ const submitCategory = () => {
   });
 };
 
-/** 删除分类 */
+/** 删除知识库 */
 const handleDeleteCategory = (category: string) => {
   const docsInCategory = allDocumentList.value.filter((doc) => doc.category === category);
 
   if (docsInCategory.length > 0) {
     proxy?.$modal
-      .confirm(`分类"${category}"下有 ${docsInCategory.length} 份文档，删除分类后这些文档将被移动到"其他文件"分类。是否继续？`)
+      .confirm(`知识库"${category}"下有 ${docsInCategory.length} 份文档，删除知识库后这些文档将被移动到"其他文件"知识库。是否继续？`)
       .then(() => {
-        // 将该分类下的文档移动到"其他文件"
+        // 将该知识库下的文档移动到"其他文件"
         allDocumentList.value.forEach((doc) => {
           if (doc.category === category) {
             doc.category = '其他文件';
           }
         });
-        proxy?.$modal.msgSuccess(`分类"${category}"已删除，${docsInCategory.length} 份文档已移动到"其他文件"`);
+        proxy?.$modal.msgSuccess(`知识库"${category}"已删除，${docsInCategory.length} 份文档已移动到"其他文件"`);
         getList();
       })
       .catch(() => {});
   } else {
-    proxy?.$modal.msgWarning('该分类下没有文档，无需删除');
+    proxy?.$modal.msgWarning('该知识库下没有文档，无需删除');
   }
+};
+
+/** 知识库分页变化处理 */
+const handleCategoryPageChange = () => {
+  // 分页变化时不需要额外操作，computed会自动更新
+  console.log('知识库分页变化', categoryPageNum.value, categoryPageSize.value);
 };
 
 onMounted(() => {
   getList();
-  // 默认展开所有分类
-  setTimeout(() => {
-    activeCategories.value = Object.keys(groupedDocuments.value);
-  }, 100);
+  // 默认折叠，不需要展开
 });
 </script>
 
