@@ -7,8 +7,8 @@
             <el-form-item label="视频ID" prop="videoId">
               <el-input v-model="queryParams.videoId" placeholder="请输入视频ID" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="设备ID" prop="deviceId">
-              <el-input v-model="queryParams.deviceId" placeholder="请输入设备ID" clearable @keyup.enter="handleQuery" />
+            <el-form-item label="设备编号" prop="deviceId">
+              <el-input v-model="queryParams.deviceId" placeholder="请输入设备编号" clearable @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="用户编号" prop="userNumber">
               <el-input v-model="queryParams.userNumber" placeholder="请输入用户编号" clearable @keyup.enter="handleQuery" />
@@ -46,11 +46,11 @@
         </el-row>
       </template>
 
-      <el-table v-loading="loading" border :data="videoList">
+      <el-table v-loading="loading" border :data="videoListData">
         <el-table-column label="视频ID" align="center" prop="videoId" width="120" />
-        <el-table-column label="设备ID" align="center" prop="deviceId" width="100" />
+        <el-table-column label="设备编号" align="center" prop="deviceId" width="100" />
         <el-table-column label="用户编号" align="center" prop="userNumber" width="120" />
-        <el-table-column label="责任人" align="center" prop="principal" width="100" />
+        <el-table-column label="用户姓名" align="center" prop="principal" width="100" />
         <el-table-column label="视频缩略图" align="center" width="120">
           <template #default="scope">
             <el-image
@@ -69,9 +69,27 @@
             </el-image>
           </template>
         </el-table-column>
-        <el-table-column label="时长" align="center" prop="duration" width="100" />
+        <el-table-column label="摄录时间(摄录时长)" align="center" prop="duration" width="100" />
         <el-table-column label="拍摄时间" align="center" prop="captureTime" width="160" />
         <el-table-column label="上传时间" align="center" prop="uploadTime" width="160" />
+        <el-table-column label="文件描述" align="left" prop="fileDescription" min-width="180" show-overflow-tooltip />
+        <el-table-column label="存储位置" align="left" prop="storageLocation" width="200" show-overflow-tooltip />
+        <el-table-column label="文件标记" align="center" prop="fileTag" width="100">
+          <template #default="scope">
+            <el-tag v-if="scope.row.fileTag" :type="getFileTagType(scope.row.fileTag)" size="small">
+              {{ scope.row.fileTag }}
+            </el-tag>
+            <span v-else style="color: #909399">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="数据来源" align="center" prop="dataSource" width="120">
+          <template #default="scope">
+            <el-tag v-if="scope.row.dataSource" type="info" size="small" effect="plain">
+              {{ scope.row.dataSource }}
+            </el-tag>
+            <span v-else style="color: #909399">-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="AI检测状态" align="center" prop="aiStatus" width="120">
           <template #default="scope">
             <el-tag :type="getStatusType(scope.row.aiStatus)" size="small">
@@ -136,16 +154,30 @@
         <div class="video-info-panel">
           <el-descriptions :column="2" border>
             <el-descriptions-item label="视频ID">{{ currentVideo.videoId }}</el-descriptions-item>
-            <el-descriptions-item label="设备ID">{{ currentVideo.deviceId }}</el-descriptions-item>
+            <el-descriptions-item label="设备编号">{{ currentVideo.deviceId }}</el-descriptions-item>
             <el-descriptions-item label="用户编号">{{ currentVideo.userNumber }}</el-descriptions-item>
-            <el-descriptions-item label="责任人">{{ currentVideo.principal }}</el-descriptions-item>
+            <el-descriptions-item label="用户姓名">{{ currentVideo.principal }}</el-descriptions-item>
             <el-descriptions-item label="拍摄时间">{{ currentVideo.captureTime }}</el-descriptions-item>
             <el-descriptions-item label="上传时间">{{ currentVideo.uploadTime }}</el-descriptions-item>
-            <el-descriptions-item label="时长">{{ currentVideo.duration }}</el-descriptions-item>
+            <el-descriptions-item label="摄录时间(摄录时长)">{{ currentVideo.duration }}</el-descriptions-item>
             <el-descriptions-item label="AI检测状态">
               <el-tag :type="getStatusType(currentVideo.aiStatus)" size="small">
                 {{ getStatusText(currentVideo.aiStatus) }}
               </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="文件描述" :span="2">{{ currentVideo.fileDescription || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="存储位置" :span="2">{{ currentVideo.storageLocation || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="文件标记">
+              <el-tag v-if="currentVideo.fileTag" :type="getFileTagType(currentVideo.fileTag)" size="small">
+                {{ currentVideo.fileTag }}
+              </el-tag>
+              <span v-else style="color: #909399">-</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="数据来源">
+              <el-tag v-if="currentVideo.dataSource" type="info" size="small" effect="plain">
+                {{ currentVideo.dataSource }}
+              </el-tag>
+              <span v-else style="color: #909399">-</span>
             </el-descriptions-item>
             <el-descriptions-item label="违规检测" :span="2">
               <el-tag v-if="currentVideo.aiStatus === 'completed'" :type="currentVideo.violationCount > 0 ? 'danger' : 'success'" size="small">
@@ -167,7 +199,7 @@
     </el-dialog>
 
     <!-- AI检测结果对话框 -->
-    <el-dialog v-model="resultDialog.visible" title="AI检测结果详情" width="800px" append-to-body>
+    <el-dialog v-model="resultDialog.visible" title="AI检测结果详情" width="950px" append-to-body>
       <div class="result-container">
         <el-alert
           v-if="currentResult.violationCount > 0"
@@ -182,7 +214,7 @@
         <el-divider content-position="left">基本信息</el-divider>
         <el-descriptions :column="2" border>
           <el-descriptions-item label="视频ID">{{ currentResult.videoId }}</el-descriptions-item>
-          <el-descriptions-item label="设备ID">{{ currentResult.deviceId }}</el-descriptions-item>
+          <el-descriptions-item label="设备编号">{{ currentResult.deviceId }}</el-descriptions-item>
           <el-descriptions-item label="检测时间">{{ currentResult.detectTime }}</el-descriptions-item>
           <el-descriptions-item label="检测用时">{{ currentResult.processingTime }}</el-descriptions-item>
           <el-descriptions-item label="检测模型">{{ currentResult.modelVersion }}</el-descriptions-item>
@@ -192,16 +224,16 @@
         </el-descriptions>
 
         <el-divider content-position="left">检测结果明细</el-divider>
-        <el-table :data="currentResult.violations" border style="width: 100%">
+        <el-table :data="currentResult.violations" border :style="{ width: '100%' }">
           <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column label="违规类型" align="center" width="150">
+          <el-table-column label="违规类型" align="center" min-width="130">
             <template #default="scope">
               <el-tag :type="getViolationTypeColor(scope.row.type)" size="small">{{ scope.row.typeName }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="违规描述" align="left" prop="description" show-overflow-tooltip />
-          <el-table-column label="时间点" align="center" width="100" prop="timestamp" />
-          <el-table-column label="严重程度" align="center" width="100">
+          <el-table-column label="违规描述" align="left" prop="description" min-width="200" show-overflow-tooltip />
+          <el-table-column label="时间点" align="center" width="80" prop="timestamp" />
+          <el-table-column label="严重程度" align="center" width="180">
             <template #default="scope">
               <el-rate v-model="scope.row.severity" disabled show-score text-color="#ff9900" />
             </template>
@@ -237,6 +269,7 @@
 </template>
 
 <script setup name="VideoManagement" lang="ts">
+import { videoList } from '@/api/equipment/video-management';
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
 // 视频数据接口
@@ -252,6 +285,10 @@ interface VideoVO {
   uploadTime: string;
   aiStatus: 'pending' | 'processing' | 'completed';
   violationCount: number;
+  fileDescription?: string; // 文件描述
+  storageLocation?: string; // 存储位置
+  fileTag?: string; // 文件标记
+  dataSource?: string; // 数据来源
 }
 
 interface VideoQuery {
@@ -307,7 +344,11 @@ const staticVideoData: VideoVO[] = [
     captureTime: '2024-01-15 09:30:00',
     uploadTime: '2024-01-15 09:35:00',
     aiStatus: 'completed',
-    violationCount: 3
+    violationCount: 3,
+    fileDescription: '矿区入口安全帽检测视频',
+    storageLocation: '/data/videos/2024/01/15/',
+    fileTag: '重点监控',
+    dataSource: '固定摄像头'
   },
   {
     videoId: 'VIDEO002',
@@ -320,7 +361,11 @@ const staticVideoData: VideoVO[] = [
     captureTime: '2024-01-15 10:15:00',
     uploadTime: '2024-01-15 10:18:00',
     aiStatus: 'completed',
-    violationCount: 0
+    violationCount: 0,
+    fileDescription: '2号工作面日常巡检',
+    storageLocation: '/data/videos/2024/01/15/',
+    fileTag: '日常监控',
+    dataSource: '移动设备'
   },
   {
     videoId: 'VIDEO003',
@@ -333,7 +378,11 @@ const staticVideoData: VideoVO[] = [
     captureTime: '2024-01-15 11:20:00',
     uploadTime: '2024-01-15 11:25:00',
     aiStatus: 'processing',
-    violationCount: 0
+    violationCount: 0,
+    fileDescription: '设备维护作业记录',
+    storageLocation: '/data/videos/2024/01/15/',
+    fileTag: '作业记录',
+    dataSource: '固定摄像头'
   },
   {
     videoId: 'VIDEO004',
@@ -346,7 +395,11 @@ const staticVideoData: VideoVO[] = [
     captureTime: '2024-01-15 13:40:00',
     uploadTime: '2024-01-15 13:42:00',
     aiStatus: 'completed',
-    violationCount: 1
+    violationCount: 1,
+    fileDescription: '焊接作业安全监控',
+    storageLocation: '/data/videos/2024/01/15/',
+    fileTag: '特种作业',
+    dataSource: '手持设备'
   },
   {
     videoId: 'VIDEO005',
@@ -359,7 +412,11 @@ const staticVideoData: VideoVO[] = [
     captureTime: '2024-01-15 14:10:00',
     uploadTime: '2024-01-15 14:15:00',
     aiStatus: 'pending',
-    violationCount: 0
+    violationCount: 0,
+    fileDescription: '电气设备巡检录像',
+    storageLocation: '/data/videos/2024/01/15/',
+    fileTag: '设备巡检',
+    dataSource: '移动设备'
   },
   {
     videoId: 'VIDEO006',
@@ -372,7 +429,11 @@ const staticVideoData: VideoVO[] = [
     captureTime: '2024-01-16 08:30:00',
     uploadTime: '2024-01-16 08:35:00',
     aiStatus: 'completed',
-    violationCount: 2
+    violationCount: 2,
+    fileDescription: '吊装作业全过程监控',
+    storageLocation: '/data/videos/2024/01/16/',
+    fileTag: '重点监控',
+    dataSource: '固定摄像头'
   },
   {
     videoId: 'VIDEO007',
@@ -385,7 +446,11 @@ const staticVideoData: VideoVO[] = [
     captureTime: '2024-01-16 09:15:00',
     uploadTime: '2024-01-16 09:20:00',
     aiStatus: 'completed',
-    violationCount: 0
+    violationCount: 0,
+    fileDescription: '矿井通风系统检查',
+    storageLocation: '/data/videos/2024/01/16/',
+    fileTag: '安全检查',
+    dataSource: '固定摄像头'
   },
   {
     videoId: 'VIDEO008',
@@ -398,7 +463,11 @@ const staticVideoData: VideoVO[] = [
     captureTime: '2024-01-16 10:45:00',
     uploadTime: '2024-01-16 10:48:00',
     aiStatus: 'processing',
-    violationCount: 0
+    violationCount: 0,
+    fileDescription: '人员进出管理记录',
+    storageLocation: '/data/videos/2024/01/16/',
+    fileTag: '人员管理',
+    dataSource: '门禁摄像头'
   }
 ];
 
@@ -537,8 +606,7 @@ const staticAIResults: Record<string, AIResult> = {
   }
 };
 
-const videoList = ref<VideoVO[]>([]);
-const allVideoList = ref<VideoVO[]>([...staticVideoData]);
+const videoListData = ref<VideoVO[]>([]);
 const loading = ref(false);
 const showSearch = ref(true);
 const total = ref(0);
@@ -612,43 +680,30 @@ const getConfidenceColor = (confidence: number): string => {
   return '#F56C6C';
 };
 
+/** 获取文件标记类型 */
+const getFileTagType = (tag: string) => {
+  const tagMap: Record<string, 'success' | 'info' | 'warning' | 'danger'> = {
+    '重点监控': 'danger',
+    '日常监控': 'info',
+    '作业记录': 'success',
+    '特种作业': 'warning',
+    '设备巡检': 'info',
+    '安全检查': 'success',
+    '人员管理': 'info'
+  };
+  return tagMap[tag] || 'info';
+};
+
 /** 查询视频列表 */
-const getList = () => {
+const getList = async () => {
   loading.value = true;
-
-  setTimeout(() => {
-    const filteredData = allVideoList.value.filter((video) => {
-      let match = true;
-      if (queryParams.value.videoId && !video.videoId.includes(queryParams.value.videoId)) {
-        match = false;
-      }
-      if (queryParams.value.deviceId && !video.deviceId.includes(queryParams.value.deviceId)) {
-        match = false;
-      }
-      if (queryParams.value.userNumber && !video.userNumber.includes(queryParams.value.userNumber)) {
-        match = false;
-      }
-      if (queryParams.value.aiStatus && video.aiStatus !== queryParams.value.aiStatus) {
-        match = false;
-      }
-      // 日期范围筛选
-      if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
-        const captureDate = video.captureTime.split(' ')[0];
-        if (captureDate < dateRange.value[0] || captureDate > dateRange.value[1]) {
-          match = false;
-        }
-      }
-      return match;
-    });
-
-    total.value = filteredData.length;
-
-    const start = (queryParams.value.pageNum - 1) * queryParams.value.pageSize;
-    const end = start + queryParams.value.pageSize;
-    videoList.value = filteredData.slice(start, end);
-
+  try {
+    const res = await videoList(proxy?.addDateRange(queryParams.value, dateRange.value));
+    videoListData.value = res.rows;
+    total.value = res.total;
+  } finally {
     loading.value = false;
-  }, 300);
+  }
 };
 
 /** 搜索按钮操作 */
@@ -701,10 +756,7 @@ const handleRedetect = (row: VideoVO) => {
   proxy?.$modal
     .confirm(`确认要对视频 ${row.videoId} 进行AI重新检测吗？`)
     .then(() => {
-      const index = allVideoList.value.findIndex((v) => v.videoId === row.videoId);
-      if (index !== -1) {
-        allVideoList.value[index].aiStatus = 'processing';
-      }
+      // TODO: 调用重新检测接口
       proxy?.$modal.msgSuccess('已提交检测任务，请稍后查看结果');
       getList();
     })
@@ -721,7 +773,7 @@ const handleDelete = (row: VideoVO) => {
   proxy?.$modal
     .confirm(`是否确认删除视频 ${row.videoId}？`)
     .then(() => {
-      allVideoList.value = allVideoList.value.filter((v) => v.videoId !== row.videoId);
+      // TODO: 调用删除接口
       proxy?.$modal.msgSuccess('删除成功');
       getList();
     })

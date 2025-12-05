@@ -54,77 +54,29 @@
         </el-row>
       </template>
 
-      <!-- 统计卡片 -->
-      <el-row :gutter="20" class="mb-4">
-        <el-col :span="6">
-          <el-card shadow="hover" class="stat-card">
-            <div class="stat-content">
-              <el-icon :size="40" color="#409EFF"><i-ep-monitor /></el-icon>
-              <div class="stat-text">
-                <div class="stat-value">{{ allDeviceList.length }}</div>
-                <div class="stat-label">设备总数</div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card shadow="hover" class="stat-card">
-            <div class="stat-content">
-              <el-icon :size="40" color="#67C23A"><i-ep-success-filled /></el-icon>
-              <div class="stat-text">
-                <div class="stat-value">{{ onlineCount }}</div>
-                <div class="stat-label">在线设备</div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card shadow="hover" class="stat-card">
-            <div class="stat-content">
-              <el-icon :size="40" color="#E6A23C"><i-ep-video-camera /></el-icon>
-              <div class="stat-text">
-                <div class="stat-value">{{ totalVideoCount }}</div>
-                <div class="stat-label">采集视频数</div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card shadow="hover" class="stat-card">
-            <div class="stat-content">
-              <el-icon :size="40" color="#F56C6C"><i-ep-warning-filled /></el-icon>
-              <div class="stat-text">
-                <div class="stat-value">{{ totalViolationCount }}</div>
-                <div class="stat-label">识别违规数</div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
-
       <el-table v-loading="loading" border :data="deviceList" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50" align="center" />
-        <el-table-column label="设备ID" align="center" prop="deviceId" width="120" />
-        <el-table-column label="序列号" align="center" prop="serialNumber" width="140" :show-overflow-tooltip="true" />
-        <el-table-column label="型号" align="center" prop="model" width="120" :show-overflow-tooltip="true" />
-        <el-table-column label="设备状态" align="center" prop="status" width="100">
+        <el-table-column label="设备ID" align="center" prop="deviceId" min-width="120" />
+        <el-table-column label="序列号" align="center" prop="serialNumber" min-width="140" :show-overflow-tooltip="true" />
+        <el-table-column label="型号" align="center" prop="model" min-width="120" :show-overflow-tooltip="true" />
+        <el-table-column label="设备状态" align="center" prop="status" min-width="100">
           <template #default="scope">
             <el-tag :type="getDeviceStatusInfo(scope.row.status).type" size="small">
               {{ getDeviceStatusInfo(scope.row.status).text }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="归属部门" align="center" prop="department" width="100" />
-        <el-table-column label="责任人" align="center" prop="principal" width="100" />
-        <el-table-column label="视频数" align="center" prop="videoCount" width="80" />
-        <el-table-column label="违规数" align="center" prop="violationCount" width="80">
+        <el-table-column label="归属部门" align="center" prop="department" min-width="100" />
+        <el-table-column label="责任人" align="center" prop="principal" min-width="100" />
+        <el-table-column label="视频数" align="center" prop="videoCount" min-width="80" />
+        <el-table-column label="违规数" align="center" prop="violationCount" min-width="80">
           <template #default="scope">
             <span :style="{ color: scope.row.violationCount > 0 ? '#F56C6C' : '', fontWeight: scope.row.violationCount > 0 ? 'bold' : 'normal' }">
               {{ scope.row.violationCount }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime" width="160" />
+        <el-table-column label="创建时间" align="center" prop="createTime" min-width="160" />
 
         <el-table-column label="操作" fixed="right" width="200" class-name="small-padding fixed-width">
           <template #default="scope">
@@ -229,9 +181,7 @@
           <el-tag type="primary" size="small">{{ viewData.videoCount }} 个</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="识别违规数">
-          <el-tag :type="viewData.violationCount > 0 ? 'danger' : 'success'" size="small">
-            {{ viewData.violationCount }} 次
-          </el-tag>
+          <el-tag :type="viewData.violationCount > 0 ? 'danger' : 'success'" size="small"> {{ viewData.violationCount }} 次 </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="创建时间" :span="2">{{ viewData.createTime }}</el-descriptions-item>
         <el-descriptions-item label="更新时间" :span="2">{{ viewData.updateTime }}</el-descriptions-item>
@@ -658,19 +608,6 @@ const data = reactive({
 
 const { queryParams, form, rules, viewData } = toRefs(data);
 
-// 计算统计数据
-const onlineCount = computed(() => {
-  return allDeviceList.value.filter((device) => device.status === 'online').length;
-});
-
-const totalVideoCount = computed(() => {
-  return allDeviceList.value.reduce((sum, device) => sum + device.videoCount, 0);
-});
-
-const totalViolationCount = computed(() => {
-  return allDeviceList.value.reduce((sum, device) => sum + device.violationCount, 0);
-});
-
 /** 查询设备列表 */
 const getList = () => {
   loading.value = true;
@@ -818,7 +755,7 @@ const submitForm = () => {
   deviceFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       const currentTime = formatDateTime();
-      
+
       if (form.value.deviceId) {
         // 更新设备
         const index = allDeviceList.value.findIndex((item) => item.deviceId === form.value.deviceId);
@@ -867,28 +804,4 @@ onMounted(() => {
 });
 </script>
 
-<style scoped lang="scss">
-.stat-card {
-  .stat-content {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    
-    .stat-text {
-      flex: 1;
-      
-      .stat-value {
-        font-size: 28px;
-        font-weight: bold;
-        color: #303133;
-        margin-bottom: 4px;
-      }
-      
-      .stat-label {
-        font-size: 14px;
-        color: #909399;
-      }
-    }
-  }
-}
-</style>
+<style scoped lang="scss"></style>

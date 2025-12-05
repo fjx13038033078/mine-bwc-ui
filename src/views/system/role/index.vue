@@ -278,6 +278,7 @@ const getList = () => {
     roleList.value = res.rows;
     total.value = res.total;
     loading.value = false;
+    console.log('-------------')
   });
 };
 
