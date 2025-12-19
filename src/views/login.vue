@@ -44,7 +44,7 @@
         </div>
       </el-form-item>
       <el-checkbox v-model="loginForm.rememberMe" style="margin: 0 0 25px 0">{{ proxy.$t('login.rememberPassword') }}</el-checkbox>
-      <el-form-item style="float: right">
+      <!-- <el-form-item style="float: right">
         <el-button circle :title="proxy.$t('login.social.wechat')" @click="doSocialLogin('wechat')">
           <svg-icon icon-class="wechat" />
         </el-button>
@@ -60,7 +60,7 @@
         <el-button circle :title="proxy.$t('login.social.github')" @click="doSocialLogin('github')">
           <svg-icon icon-class="github" />
         </el-button>
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item style="width: 100%">
         <el-button :loading="loading" size="large" type="primary" style="width: 100%" @click.prevent="handleLogin">
           <span v-if="!loading">{{ proxy.$t('login.login') }}</span>
