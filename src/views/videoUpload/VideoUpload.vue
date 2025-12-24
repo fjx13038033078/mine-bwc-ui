@@ -225,6 +225,7 @@
 </template>
 
 <script setup>
+  import { getToken } from '@/utils/auth';
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
@@ -251,7 +252,7 @@ const uploadError = ref(false)
 const eventsData = ref([])
 
 // API 地址 (通过代理访问，解决跨域问题)
-const apiUrl = '/api/upload-video'
+const apiUrl = '/dev-api/camera/camera/management/upload'
 
 // 处理文件选择
 const handleFileChange = (uploadFile) => {
@@ -409,7 +410,9 @@ const uploadFile = async () => {
   try {
     const response = await axios.post(apiUrl, formDataToSend, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'clientid': import.meta.env.VITE_APP_CLIENT_ID,
+        'Authorization': 'Bearer ' + getToken()
       },
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total) {
@@ -422,8 +425,8 @@ const uploadFile = async () => {
     uploadProgress.value = 100
     uploadResult.value = JSON.stringify(response.data, null, 2)
     
-    if (response.data?.analysis_result?.events) {
-      eventsData.value = response.data.analysis_result.events
+    if (response.data.data?.analysis_result?.events) {
+      eventsData.value = response.data.data.analysis_result.events
     }
     
     ElMessage.success('分析完成！')
