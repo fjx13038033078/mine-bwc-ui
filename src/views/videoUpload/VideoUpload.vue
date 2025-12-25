@@ -60,12 +60,7 @@
                   <el-tag size="small" type="success">已选择</el-tag>
                 </p>
               </div>
-              <el-button
-                type="danger"
-                :icon="Delete"
-                circle
-                @click.stop="removeFile"
-              />
+              <el-button type="danger" :icon="Delete" circle @click.stop="removeFile" />
             </div>
           </el-upload>
 
@@ -82,23 +77,12 @@
             >
               {{ isUploading ? `分析中 ${uploadProgress}%` : '开始分析' }}
             </el-button>
-            <el-button
-              size="large"
-              :icon="RefreshRight"
-              :disabled="isUploading"
-              @click="resetForm"
-            >
-              重置
-            </el-button>
+            <el-button size="large" :icon="RefreshRight" :disabled="isUploading" @click="resetForm"> 重置 </el-button>
           </div>
 
           <!-- 进度显示 -->
           <div v-if="isUploading" class="progress-area">
-            <el-progress
-              :percentage="uploadProgress"
-              :stroke-width="12"
-              :status="uploadProgress === 100 ? 'success' : undefined"
-            />
+            <el-progress :percentage="uploadProgress" :stroke-width="12" :status="uploadProgress === 100 ? 'success' : undefined" />
             <p class="progress-text">正在上传并分析视频，请稍候...</p>
           </div>
 
@@ -121,9 +105,15 @@
             <span>使用说明</span>
           </div>
           <ul class="tips-list">
-            <li><el-icon><Check /></el-icon>支持 MP4、AVI、MOV、MKV 格式</li>
-            <li><el-icon><Check /></el-icon>视频大小建议不超过 500MB</li>
-            <li><el-icon><Check /></el-icon>分析完成后将自动展示结果</li>
+            <li>
+              <el-icon><Check /></el-icon>支持 MP4、AVI、MOV、MKV 格式
+            </li>
+            <li>
+              <el-icon><Check /></el-icon>视频大小建议不超过 500MB
+            </li>
+            <li>
+              <el-icon><Check /></el-icon>分析完成后将自动展示结果
+            </li>
           </ul>
         </el-card>
       </section>
@@ -134,9 +124,7 @@
           <div class="section-title">
             <el-icon :size="22" color="#67C23A"><List /></el-icon>
             <span>分析结果</span>
-            <el-tag v-if="eventsData.length > 0" type="success" effect="dark" class="count-tag">
-              {{ eventsData.length }} 条事件
-            </el-tag>
+            <el-tag v-if="eventsData.length > 0" type="success" effect="dark" class="count-tag"> {{ eventsData.length }} 条事件 </el-tag>
           </div>
 
           <!-- 空状态 -->
@@ -171,8 +159,8 @@
                 <template #default="{ row }">
                   <div class="cell-content" :class="getCellClass(key)">
                     <template v-if="key === 'confidence' || key === 'score'">
-                      <el-progress 
-                        :percentage="Number((row[key] * 100).toFixed(1))" 
+                      <el-progress
+                        :percentage="Number((row[key] * 100).toFixed(1))"
                         :stroke-width="10"
                         :text-inside="true"
                         :status="row[key] > 0.8 ? 'success' : row[key] > 0.5 ? '' : 'warning'"
@@ -182,12 +170,7 @@
                       <el-tag :type="getTagType(row[key])">{{ row[key] }}</el-tag>
                     </template>
                     <template v-else-if="key === 'event_description'">
-                      <el-popover
-                        placement="top-start"
-                        :width="400"
-                        trigger="hover"
-                        :content="row[key]"
-                      >
+                      <el-popover placement="top-start" :width="400" trigger="hover" :content="row[key]">
                         <template #reference>
                           <div class="description-cell">{{ row[key] }}</div>
                         </template>
@@ -225,64 +208,49 @@
 </template>
 
 <script setup>
-  import { getToken } from '@/utils/auth';
-import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import axios from 'axios'
-import {
-  VideoCamera,
-  UploadFilled,
-  VideoPlay,
-  Delete,
-  Upload,
-  RefreshRight,
-  List,
-  InfoFilled,
-  Check,
-  Document
-} from '@element-plus/icons-vue'
+import { managementUpload } from '@/api/videoUpload/videoUpload';
+import { ref } from 'vue';
+import { ElMessage } from 'element-plus';
+import { VideoCamera, UploadFilled, VideoPlay, Delete, Upload, RefreshRight, List, InfoFilled, Check, Document } from '@element-plus/icons-vue';
 
 // 响应式状态
-const uploadRef = ref(null)
-const selectedFile = ref(null)
-const isUploading = ref(false)
-const uploadProgress = ref(0)
-const uploadResult = ref(null)
-const uploadError = ref(false)
-const eventsData = ref([])
-
-// API 地址 (通过代理访问，解决跨域问题)
-const apiUrl = '/dev-api/camera/camera/management/upload'
+const uploadRef = ref(null);
+const selectedFile = ref(null);
+const isUploading = ref(false);
+const uploadProgress = ref(0);
+const uploadResult = ref(null);
+const uploadError = ref(false);
+const eventsData = ref([]);
 
 // 处理文件选择
 const handleFileChange = (uploadFile) => {
-  const file = uploadFile.raw
-  
-  if (!file) return
-  
-  const validExtensions = ['mp4', 'avi', 'mov', 'mkv']
-  const fileExtension = file.name.split('.').pop().toLowerCase()
-  
+  const file = uploadFile.raw;
+
+  if (!file) return;
+
+  const validExtensions = ['mp4', 'avi', 'mov', 'mkv'];
+  const fileExtension = file.name.split('.').pop().toLowerCase();
+
   if (!validExtensions.includes(fileExtension)) {
-    ElMessage.error('请上传支持的视频格式：MP4、AVI、MOV、MKV')
-    return
+    ElMessage.error('请上传支持的视频格式：MP4、AVI、MOV、MKV');
+    return;
   }
-  
-  selectedFile.value = file
-  uploadResult.value = null
-  uploadError.value = false
-  
-  ElMessage.success(`已选择文件：${file.name}`)
-}
+
+  selectedFile.value = file;
+  uploadResult.value = null;
+  uploadError.value = false;
+
+  ElMessage.success(`已选择文件：${file.name}`);
+};
 
 // 移除文件
 const removeFile = () => {
-  selectedFile.value = null
-  uploadRef.value?.clearFiles()
-  uploadResult.value = null
-  uploadError.value = false
-  eventsData.value = []
-}
+  selectedFile.value = null;
+  uploadRef.value?.clearFiles();
+  uploadResult.value = null;
+  uploadError.value = false;
+  eventsData.value = [];
+};
 
 // 格式化列标签
 const formatColumnLabel = (key) => {
@@ -307,26 +275,26 @@ const formatColumnLabel = (key) => {
     'frame': '帧',
     'id': 'ID',
     'name': '名称'
-  }
-  return labelMap[key] || key
-}
+  };
+  return labelMap[key] || key;
+};
 
 // 定义列顺序
-const columnOrder = ['date', 'start_time', 'end_time', 'serial_number', 'unit_number', 'user_number', 'event_description']
+const columnOrder = ['date', 'start_time', 'end_time', 'serial_number', 'unit_number', 'user_number', 'event_description'];
 
 // 获取排序后的列
 const getOrderedColumns = (data) => {
-  if (!data || data.length === 0) return []
-  const keys = Object.keys(data[0])
+  if (!data || data.length === 0) return [];
+  const keys = Object.keys(data[0]);
   return keys.sort((a, b) => {
-    const indexA = columnOrder.indexOf(a)
-    const indexB = columnOrder.indexOf(b)
-    if (indexA === -1 && indexB === -1) return 0
-    if (indexA === -1) return 1
-    if (indexB === -1) return -1
-    return indexA - indexB
-  })
-}
+    const indexA = columnOrder.indexOf(a);
+    const indexB = columnOrder.indexOf(b);
+    if (indexA === -1 && indexB === -1) return 0;
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
+};
 
 // 获取列宽度
 const getColumnWidth = (key) => {
@@ -349,17 +317,17 @@ const getColumnWidth = (key) => {
     'score': 130,
     'id': 70,
     'frame': 70
-  }
-  return widthMap[key] || 120
-}
+  };
+  return widthMap[key] || 120;
+};
 
 // 获取单元格样式类
 const getCellClass = (key) => {
   if (['description', 'content', 'event_description'].includes(key)) {
-    return 'text-left'
+    return 'text-left';
   }
-  return ''
-}
+  return '';
+};
 
 // 获取标签类型
 const getTagType = (value) => {
@@ -369,84 +337,88 @@ const getTagType = (value) => {
     '动物': 'warning',
     '物体': 'info',
     '场景': 'danger'
-  }
-  if (typeMap[value]) return typeMap[value]
-  const types = ['primary', 'success', 'warning', 'info', 'danger', '']
-  const hash = value ? value.toString().split('').reduce((a, b) => a + b.charCodeAt(0), 0) : 0
-  return types[hash % types.length]
-}
+  };
+  if (typeMap[value]) return typeMap[value];
+  const types = ['primary', 'success', 'warning', 'info', 'danger', ''];
+  const hash = value
+    ? value
+        .toString()
+        .split('')
+        .reduce((a, b) => a + b.charCodeAt(0), 0)
+    : 0;
+  return types[hash % types.length];
+};
 
 // 重置表单
 const resetForm = () => {
-  removeFile()
-  uploadProgress.value = 0
-}
+  removeFile();
+  uploadProgress.value = 0;
+};
 
 // 格式化文件大小
 const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 // 上传文件
 const uploadFile = async () => {
   if (!selectedFile.value) {
-    ElMessage.warning('请先选择要上传的视频文件')
-    return
+    ElMessage.warning('请先选择要上传的视频文件');
+    return;
   }
-  
-  isUploading.value = true
-  uploadProgress.value = 0
-  uploadResult.value = null
-  uploadError.value = false
-  eventsData.value = []
-  
-  const formDataToSend = new FormData()
-  formDataToSend.append('file', selectedFile.value)
-  
-  try {
-    const response = await axios.post(apiUrl, formDataToSend, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'clientid': import.meta.env.VITE_APP_CLIENT_ID,
-        'Authorization': 'Bearer ' + getToken()
-      },
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          uploadProgress.value = Math.round((progressEvent.loaded / progressEvent.total) * 100)
-        }
+
+  isUploading.value = true;
+  uploadProgress.value = 0;
+  uploadResult.value = null;
+  uploadError.value = false;
+  eventsData.value = [];
+
+  const formDataToSend = new FormData();
+  formDataToSend.append('file', selectedFile.value);
+  managementUpload(formDataToSend, {
+    // 进度条
+    onUploadProgress: (progressEvent) => {
+      if (progressEvent.total) {
+        uploadProgress.value = Math.round((progressEvent.loaded / progressEvent.total) * 100);
       }
-    })
-    
-    isUploading.value = false
-    uploadProgress.value = 100
-    uploadResult.value = JSON.stringify(response.data, null, 2)
-    
-    if (response.data.data?.analysis_result?.events) {
-      eventsData.value = response.data.data.analysis_result.events
     }
-    
-    ElMessage.success('分析完成！')
-    
-  } catch (error) {
-    isUploading.value = false
-    uploadError.value = true
-    
-    if (error.response) {
-      uploadResult.value = `HTTP ${error.response.status}: ${error.response.statusText}\n${JSON.stringify(error.response.data, null, 2)}`
-      ElMessage.error(`请求失败: ${error.response.status}`)
-    } else if (error.request) {
-      uploadResult.value = '网络错误，请检查网络连接和接口地址'
-      ElMessage.error('网络错误，请检查网络连接')
+  }).then((response) => {
+    if (response.code == 200) {
+      isUploading.value = false;
+      uploadProgress.value = 100;
+      uploadResult.value = JSON.stringify(response.data, null, 2);
+
+      if (response.data?.analysis_result?.events && response.data?.analysis_result?.events.length > 0) {
+        eventsData.value = response.data.analysis_result.events;
+        ElMessage.success(response.data.message);
+      } else {
+        ElMessage.error(response.data.message);
+      }
+
     } else {
-      uploadResult.value = error.message
-      ElMessage.error('请求失败')
+      isUploading.value = false;
+      uploadError.value = true;
+      ElMessage.error('分析失败！');
     }
-  }
-}
+  });
+  // .finally(() => {
+
+  // if (error.response) {
+  //   uploadResult.value = `HTTP ${error.response.status}: ${error.response.statusText}\n${JSON.stringify(error.response.data, null, 2)}`;
+  //   ElMessage.error(`请求失败: ${error.response.status}`);
+  // } else if (error.request) {
+  //   uploadResult.value = '网络错误，请检查网络连接和接口地址';
+  //   ElMessage.error('网络错误，请检查网络连接');
+  // } else {
+  //   uploadResult.value = error.message;
+  //   ElMessage.error('请求失败');
+  // }
+  // });
+};
 </script>
 
 <style scoped>
@@ -557,7 +529,7 @@ const uploadFile = async () => {
 }
 
 .video-uploader :deep(.el-upload-dragger:hover) {
-  border-color: #409EFF;
+  border-color: #409eff;
   background: #ecf5ff;
 }
 
@@ -572,7 +544,7 @@ const uploadFile = async () => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #409EFF 0%, #79bbff 100%);
+  background: linear-gradient(135deg, #409eff 0%, #79bbff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -599,7 +571,7 @@ const uploadFile = async () => {
 }
 
 .upload-text .sub-text em {
-  color: #409EFF;
+  color: #409eff;
   font-style: normal;
   cursor: pointer;
 }
@@ -703,7 +675,7 @@ const uploadFile = async () => {
 }
 
 .tips-list li .el-icon {
-  color: #67C23A;
+  color: #67c23a;
 }
 
 /* 右侧结果区域 */
@@ -796,7 +768,7 @@ const uploadFile = async () => {
 }
 
 .description-cell:hover {
-  color: #409EFF;
+  color: #409eff;
 }
 
 .date-cell {
@@ -806,7 +778,7 @@ const uploadFile = async () => {
 
 .time-cell {
   font-family: 'SF Mono', Monaco, Consolas, monospace;
-  color: #409EFF;
+  color: #409eff;
   font-weight: 500;
 }
 
@@ -834,11 +806,11 @@ const uploadFile = async () => {
   .main-content {
     flex-direction: column;
   }
-  
+
   .upload-section {
     width: 100%;
   }
-  
+
   .result-section {
     min-height: 500px;
   }
@@ -848,11 +820,11 @@ const uploadFile = async () => {
   .main-content {
     padding: 16px;
   }
-  
+
   .page-header {
     padding: 0 16px;
   }
-  
+
   .logo span {
     display: none;
   }
