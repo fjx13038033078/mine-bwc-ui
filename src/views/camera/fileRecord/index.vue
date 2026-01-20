@@ -1,0 +1,413 @@
+<template>
+  <div class="p-2">
+    <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
+      <div v-show="showSearch" class="mb-[10px]">
+        <el-card shadow="hover">
+          <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="90px">
+            <el-form-item label="用户姓名" prop="userName">
+              <el-input v-model="queryParams.userName" placeholder="请输入用户姓名" clearable style="width: 200px" @keyup.enter="handleQuery" />
+            </el-form-item>
+            <el-form-item label="用户编号" prop="userCode">
+              <el-input v-model="queryParams.userCode" placeholder="请输入用户编号" clearable style="width: 200px" @keyup.enter="handleQuery" />
+            </el-form-item>
+            <el-form-item label="来源设备" prop="deviceId">
+              <el-input v-model="queryParams.deviceId" placeholder="请输入来源设备" clearable style="width: 200px" @keyup.enter="handleQuery" />
+            </el-form-item>
+            <el-form-item label="媒体类型" prop="mediaType">
+              <el-select v-model="queryParams.mediaType" placeholder="请选择媒体类型" clearable style="width: 200px">
+                <el-option label="MP4" value="mp4" />
+                <el-option label="MOV" value="mov" />
+                <el-option label="AVI" value="avi" />
+                <el-option label="MKV" value="mkv" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="数据来源" prop="dataSource">
+              <el-select v-model="queryParams.dataSource" placeholder="请选择数据来源" clearable style="width: 200px">
+                <el-option label="执法记录仪自动上传" value="auto" />
+                <el-option label="手动上传" value="manual" />
+                <el-option label="外部导入" value="import" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="AI检测状态" prop="aiCheckStatus">
+              <el-select v-model="queryParams.aiCheckStatus" placeholder="请选择检测状态" clearable style="width: 200px">
+                <el-option label="未检测" :value="0" />
+                <el-option label="检测中" :value="1" />
+                <el-option label="检测完成" :value="2" />
+                <el-option label="检测失败" :value="3" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="拍摄时间" style="width: 308px">
+              <el-date-picker
+                v-model="dateRange"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                type="daterange"
+                range-separator="-"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+      </div>
+    </transition>
+
+    <el-card shadow="hover">
+      <template #header>
+        <el-row :gutter="10" class="mb8">
+          <el-col :span="1.5">
+            <el-button v-hasPermi="['camera:management:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
+              删除
+            </el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button v-hasPermi="['camera:management:export']" type="warning" plain icon="Download" @click="handleExport">导出</el-button>
+          </el-col>
+          <right-toolbar v-model:show-search="showSearch" :columns="columns" @query-table="getList" />
+        </el-row>
+      </template>
+
+      <el-table v-loading="loading" :data="dataList" border @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="50" align="center" />
+        <el-table-column v-if="columns[0].visible" label="视频ID" align="center" prop="videoId" width="80" />
+        <el-table-column v-if="columns[1].visible" label="用户姓名" align="center" prop="userName" width="100" :show-overflow-tooltip="true" />
+        <el-table-column v-if="columns[2].visible" label="用户编号" align="center" prop="userCode" width="110" :show-overflow-tooltip="true" />
+        <el-table-column v-if="columns[3].visible" label="来源设备" align="center" prop="deviceId" width="120" :show-overflow-tooltip="true" />
+        <el-table-column v-if="columns[4].visible" label="拍摄时间" align="center" prop="shootTime" width="160">
+          <template #default="scope">
+            <span>{{ parseTime(scope.row.shootTime) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="columns[5].visible" label="视频时长" align="center" prop="durationDisplay" width="90" />
+        <el-table-column v-if="columns[6].visible" label="媒体类型" align="center" prop="mediaType" width="90">
+          <template #default="scope">
+            <el-tag type="info" effect="plain">{{ scope.row.mediaType?.toUpperCase() }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="columns[7].visible" label="文件描述" align="center" prop="fileDescription" min-width="180" :show-overflow-tooltip="true" />
+        <el-table-column v-if="columns[8].visible" label="数据来源" align="center" prop="dataSource" width="130">
+          <template #default="scope">
+            <el-tag :type="getDataSourceType(scope.row.dataSource)" effect="plain">
+              {{ getDataSourceLabel(scope.row.dataSource) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="columns[9].visible" label="AI检测状态" align="center" prop="aiCheckStatus" width="110">
+          <template #default="scope">
+            <el-tag :type="getAiStatusType(scope.row.aiCheckStatus)">
+              {{ getAiStatusLabel(scope.row.aiCheckStatus) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="columns[10].visible" label="上传时间" align="center" prop="uploadTime" width="160">
+          <template #default="scope">
+            <span>{{ parseTime(scope.row.uploadTime) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" fixed="right" width="180" align="center" class-name="small-padding fixed-width">
+          <template #default="scope">
+            <el-tooltip content="查看详情" placement="top">
+              <el-button v-hasPermi="['camera:management:query']" link type="primary" icon="View" @click="handleView(scope.row)" />
+            </el-tooltip>
+            <el-tooltip content="播放视频" placement="top">
+              <el-button v-hasPermi="['camera:management:query']" link type="primary" icon="VideoPlay" @click="handlePlay(scope.row)" />
+            </el-tooltip>
+            <el-tooltip content="AI分析" placement="top">
+              <el-button
+                v-hasPermi="['camera:management:edit']"
+                link
+                type="primary"
+                icon="DataAnalysis"
+                :disabled="scope.row.aiCheckStatus === 1"
+                @click="handleAnalysis(scope.row)"
+              />
+            </el-tooltip>
+            <el-tooltip content="删除" placement="top">
+              <el-button v-hasPermi="['camera:management:remove']" link type="primary" icon="Delete" @click="handleDelete(scope.row)" />
+            </el-tooltip>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+    </el-card>
+
+    <!-- 详情对话框 -->
+    <el-dialog v-model="detailDialog.visible" :title="detailDialog.title" width="700px" append-to-body>
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="视频ID">{{ detailData.videoId }}</el-descriptions-item>
+        <el-descriptions-item label="来源设备">{{ detailData.deviceId }}</el-descriptions-item>
+        <el-descriptions-item label="用户姓名">{{ detailData.userName }}</el-descriptions-item>
+        <el-descriptions-item label="用户编号">{{ detailData.userCode }}</el-descriptions-item>
+        <el-descriptions-item label="拍摄时间">{{ parseTime(detailData.shootTime) }}</el-descriptions-item>
+        <el-descriptions-item label="上传时间">{{ parseTime(detailData.uploadTime) }}</el-descriptions-item>
+        <el-descriptions-item label="视频时长">{{ detailData.durationDisplay }}</el-descriptions-item>
+        <el-descriptions-item label="媒体类型">
+          <el-tag type="info" effect="plain">{{ detailData.mediaType?.toUpperCase() }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="数据来源">
+          <el-tag :type="getDataSourceType(detailData.dataSource)" effect="plain">
+            {{ getDataSourceLabel(detailData.dataSource) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="AI检测状态">
+          <el-tag :type="getAiStatusType(detailData.aiCheckStatus)">
+            {{ getAiStatusLabel(detailData.aiCheckStatus) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="文件描述" :span="2">{{ detailData.fileDescription || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="存储位置" :span="2">
+          <el-link type="primary" :underline="false">{{ detailData.storageLocation }}</el-link>
+        </el-descriptions-item>
+        <el-descriptions-item v-if="detailData.aiCheckResult" label="AI检测结果" :span="2">
+          <pre class="ai-result-text">{{ formatAiResult(detailData.aiCheckResult) }}</pre>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailDialog.visible = false">关 闭</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 视频播放对话框 -->
+    <el-dialog v-model="playDialog.visible" :title="playDialog.title" width="800px" append-to-body @close="handleClosePlay">
+      <div class="video-container">
+        <video v-if="playDialog.visible" ref="videoRef" :src="playDialog.url" controls autoplay class="video-player">
+          您的浏览器不支持视频播放
+        </video>
+      </div>
+      <template #footer>
+        <el-button @click="playDialog.visible = false">关 闭</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup name="CameraFileRecord" lang="ts">
+import { listCameraManagement, delCameraManagement } from '@/api/camera/management';
+import { CameraManagementVO, CameraManagementQuery } from '@/api/camera/management/types';
+import { parseTime } from '@/utils/ruoyi';
+
+const { proxy } = getCurrentInstance() as ComponentInternalInstance;
+
+const loading = ref(true);
+const showSearch = ref(true);
+const ids = ref<Array<number | string>>([]);
+const multiple = ref(true);
+const total = ref(0);
+const dataList = ref<CameraManagementVO[]>([]);
+const dateRange = ref<[DateModelType, DateModelType]>(['', '']);
+
+const queryFormRef = ref<ElFormInstance>();
+const videoRef = ref<HTMLVideoElement>();
+
+// 列显隐信息
+const columns = ref<FieldOption[]>([
+  { key: 0, label: '视频ID', visible: false, children: [] },
+  { key: 1, label: '用户姓名', visible: true, children: [] },
+  { key: 2, label: '用户编号', visible: true, children: [] },
+  { key: 3, label: '来源设备', visible: true, children: [] },
+  { key: 4, label: '拍摄时间', visible: true, children: [] },
+  { key: 5, label: '视频时长', visible: true, children: [] },
+  { key: 6, label: '媒体类型', visible: true, children: [] },
+  { key: 7, label: '文件描述', visible: true, children: [] },
+  { key: 8, label: '数据来源', visible: true, children: [] },
+  { key: 9, label: 'AI检测状态', visible: true, children: [] },
+  { key: 10, label: '上传时间', visible: true, children: [] }
+]);
+
+// 详情对话框
+const detailDialog = reactive<DialogOption>({
+  visible: false,
+  title: '视频详情'
+});
+
+const detailData = ref<Partial<CameraManagementVO>>({});
+
+// 播放对话框
+const playDialog = reactive({
+  visible: false,
+  title: '视频播放',
+  url: ''
+});
+
+// 查询参数
+const queryParams = ref<CameraManagementQuery>({
+  pageNum: 1,
+  pageSize: 10,
+  userName: undefined,
+  userCode: undefined,
+  deviceId: undefined,
+  mediaType: undefined,
+  dataSource: undefined,
+  aiCheckStatus: undefined
+});
+
+/** 查询列表 */
+const getList = async () => {
+  loading.value = true;
+  try {
+    const res = await listCameraManagement(proxy?.addDateRange(queryParams.value, dateRange.value, 'ShootTime'));
+    dataList.value = res.rows;
+    total.value = res.total;
+  } finally {
+    loading.value = false;
+  }
+};
+
+/** 搜索按钮操作 */
+const handleQuery = () => {
+  queryParams.value.pageNum = 1;
+  getList();
+};
+
+/** 重置按钮操作 */
+const resetQuery = () => {
+  dateRange.value = ['', ''];
+  queryFormRef.value?.resetFields();
+  queryParams.value.pageNum = 1;
+  handleQuery();
+};
+
+/** 多选框选中数据 */
+const handleSelectionChange = (selection: CameraManagementVO[]) => {
+  ids.value = selection.map((item) => item.videoId);
+  multiple.value = !selection.length;
+};
+
+/** 查看详情 */
+const handleView = (row: CameraManagementVO) => {
+  detailData.value = row;
+  detailDialog.visible = true;
+};
+
+/** 播放视频 */
+const handlePlay = (row: CameraManagementVO) => {
+  playDialog.title = `播放视频 - ${row.userName}`;
+  playDialog.url = row.storageLocation;
+  playDialog.visible = true;
+};
+
+/** 关闭播放 */
+const handleClosePlay = () => {
+  if (videoRef.value) {
+    videoRef.value.pause();
+  }
+  playDialog.url = '';
+};
+
+/** AI分析 */
+const handleAnalysis = async (row: CameraManagementVO) => {
+  await proxy?.$modal.confirm(`是否对视频"${row.videoId}"进行AI分析？`);
+  // TODO: 调用AI分析接口
+  proxy?.$modal.msgSuccess('已提交AI分析任务');
+};
+
+/** 删除按钮操作 */
+const handleDelete = async (row?: CameraManagementVO) => {
+  const videoIds = row?.videoId || ids.value;
+  await proxy?.$modal.confirm('是否确认删除视频编号为"' + videoIds + '"的数据项？');
+  await delCameraManagement(videoIds);
+  await getList();
+  proxy?.$modal.msgSuccess('删除成功');
+};
+
+/** 导出按钮操作 */
+const handleExport = () => {
+  proxy?.download(
+    'camera/camera/management/export',
+    {
+      ...queryParams.value
+    },
+    `camera_management_${new Date().getTime()}.xlsx`
+  );
+};
+
+/** 获取数据来源标签 */
+const getDataSourceLabel = (dataSource: string) => {
+  const map: Record<string, string> = {
+    auto: '自动上传',
+    manual: '手动上传',
+    import: '外部导入'
+  };
+  return map[dataSource] || dataSource || '-';
+};
+
+/** 获取数据来源类型 */
+const getDataSourceType = (dataSource: string) => {
+  const map: Record<string, string> = {
+    auto: 'success',
+    manual: 'primary',
+    import: 'warning'
+  };
+  return map[dataSource] || 'info';
+};
+
+/** 获取AI状态标签 */
+const getAiStatusLabel = (status: number) => {
+  const map: Record<number, string> = {
+    0: '未检测',
+    1: '检测中',
+    2: '检测完成',
+    3: '检测失败'
+  };
+  return map[status] ?? '-';
+};
+
+/** 获取AI状态类型 */
+const getAiStatusType = (status: number) => {
+  const map: Record<number, string> = {
+    0: 'info',
+    1: 'warning',
+    2: 'success',
+    3: 'danger'
+  };
+  return map[status] ?? 'info';
+};
+
+/** 格式化AI结果 */
+const formatAiResult = (result: string) => {
+  try {
+    const obj = JSON.parse(result);
+    return JSON.stringify(obj, null, 2);
+  } catch {
+    return result;
+  }
+};
+
+onMounted(() => {
+  getList();
+});
+</script>
+
+<style scoped lang="scss">
+.video-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-player {
+  width: 100%;
+  max-height: 450px;
+}
+
+.ai-result-text {
+  margin: 0;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+</style>

@@ -84,11 +84,57 @@
 
       <!-- 右侧结果区域 -->
       <el-col :lg="16" :xs="24">
-        <el-card shadow="hover">
+        <!-- 不安全事件卡片（重点展示） -->
+        <el-card shadow="hover" class="unsafe-events-card" v-if="unsafeEventList.length > 0">
+          <template #header>
+            <div class="unsafe-header">
+              <span class="unsafe-title">
+                <el-icon color="#F56C6C" :size="20"><i-ep-warning-filled /></el-icon>
+                安全违规报告
+              </span>
+              <el-tag type="danger" effect="dark">{{ unsafeEventList.length }} 条违规</el-tag>
+            </div>
+          </template>
+
+          <div class="unsafe-events-list">
+            <el-collapse v-model="activeUnsafeEvent" accordion>
+              <el-collapse-item v-for="(event, index) in unsafeEventList" :key="index" :name="index">
+                <template #title>
+                  <div class="unsafe-event-title">
+                    <el-tag type="danger" size="small">违规 {{ index + 1 }}</el-tag>
+                    <span class="event-time">{{ event.date }} {{ event.start_time }} - {{ event.end_time }}</span>
+                    <el-tag type="info" size="small">{{ event.serial_number }}</el-tag>
+                  </div>
+                </template>
+                <div class="unsafe-event-content">
+                  <!-- 事件基本信息 -->
+                  <el-descriptions :column="3" size="small" border style="margin-bottom: 16px">
+                    <el-descriptions-item label="序列号">
+                      <el-tag type="primary" effect="plain" size="small">{{ event.serial_number }}</el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="单元编号">
+                      <el-tag type="info" effect="plain" size="small">{{ event.unit_number }}</el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="用户编号">
+                      <el-tag type="info" effect="plain" size="small">{{ event.user_number }}</el-tag>
+                    </el-descriptions-item>
+                  </el-descriptions>
+                  <!-- 违规报告详情 -->
+                  <div class="report-content">
+                    <pre class="report-text">{{ event.event_description }}</pre>
+                  </div>
+                </div>
+              </el-collapse-item>
+            </el-collapse>
+          </div>
+        </el-card>
+
+        <!-- 事件列表卡片 -->
+        <el-card shadow="hover" :style="{ marginTop: unsafeEventList.length > 0 ? '20px' : '0' }">
           <template #header>
             <el-row :gutter="10">
               <el-col :span="1.5">
-                <span>分析结果</span>
+                <span>事件记录</span>
                 <el-tag v-if="total > 0" type="success" effect="plain" style="margin-left: 10px">{{ total }} 条事件</el-tag>
               </el-col>
               <right-toolbar v-model:show-search="showSearch" @query-table="getList" v-if="total > 0">
@@ -100,7 +146,7 @@
           </template>
 
           <!-- 空状态 -->
-          <div v-if="eventList.length === 0" style="padding: 60px 0; text-align: center">
+          <div v-if="eventList.length === 0 && unsafeEventList.length === 0" style="padding: 60px 0; text-align: center">
             <el-empty description="暂无分析结果">
               <template #description>
                 <span style="color: #909399">上传视频后，分析结果将在此处展示</span>
@@ -109,7 +155,7 @@
           </div>
 
           <!-- 结果表格 -->
-          <div v-else>
+          <div v-else-if="eventList.length > 0">
             <el-table v-loading="loading" border :data="eventList" style="width: 100%">
               <el-table-column type="index" label="序号" width="60" align="center" />
               <el-table-column
@@ -136,6 +182,11 @@
               </el-table-column>
             </el-table>
           </div>
+
+          <!-- 无普通事件但有违规事件时的提示 -->
+          <div v-else style="padding: 40px 0; text-align: center">
+            <el-empty :image-size="100" description="无其他事件记录" />
+          </div>
         </el-card>
       </el-col>
     </el-row>
@@ -158,7 +209,10 @@ const loading = ref(false);
 const showSearch = ref(false);
 const uploadProgress = ref(0);
 const eventList = ref<VideoEvent[]>([]);
+const unsafeEventList = ref<VideoEvent[]>([]);
 const total = ref(0);
+const totalUnsafe = ref(0);
+const activeUnsafeEvent = ref<number>(0); // 默认展开第一个不安全事件
 
 // 文件类型配置
 const fileType = ['mp4', 'avi', 'mov', 'mkv'];
@@ -209,7 +263,9 @@ const handleRemove = () => {
   form.value.file = null;
   uploadRef.value?.clearFiles();
   eventList.value = [];
+  unsafeEventList.value = [];
   total.value = 0;
+  totalUnsafe.value = 0;
 };
 
 /** 表格列配置 */
@@ -238,7 +294,10 @@ const handleReset = () => {
   uploadRef.value?.clearFiles();
   uploadProgress.value = 0;
   eventList.value = [];
+  unsafeEventList.value = [];
   total.value = 0;
+  totalUnsafe.value = 0;
+  activeUnsafeEvent.value = 0;
 };
 
 /** 格式化文件大小 */
@@ -265,7 +324,9 @@ const handleUpload = async () => {
   loading.value = true;
   uploadProgress.value = 0;
   eventList.value = [];
+  unsafeEventList.value = [];
   total.value = 0;
+  totalUnsafe.value = 0;
 
   try {
     const formData = new FormData();
@@ -279,10 +340,25 @@ const handleUpload = async () => {
 
     uploadProgress.value = 100;
 
-    // response 包含 code、msg、data 字段
-    if (response?.data?.analysis_result?.events && response.data.analysis_result.events.length > 0) {
-      eventList.value = response.data.analysis_result.events;
-      total.value = eventList.value.length;
+    const analysisResult = response?.data?.analysis_result;
+
+    // 处理普通事件
+    if (analysisResult?.events && analysisResult.events.length > 0) {
+      eventList.value = analysisResult.events;
+      total.value = analysisResult.total_events || eventList.value.length;
+    }
+
+    // 处理不安全事件（重点）
+    if (analysisResult?.unsafe_events && analysisResult.unsafe_events.length > 0) {
+      unsafeEventList.value = analysisResult.unsafe_events;
+      totalUnsafe.value = analysisResult.total_unsafe_events || unsafeEventList.value.length;
+      activeUnsafeEvent.value = 0; // 默认展开第一个
+    }
+
+    // 显示结果提示
+    if (unsafeEventList.value.length > 0) {
+      proxy?.$modal.msgWarning(`检测到 ${unsafeEventList.value.length} 条安全违规事件，请及时处理！`);
+    } else if (eventList.value.length > 0) {
       proxy?.$modal.msgSuccess(response.data.message || response.msg || '视频分析完成');
     } else {
       proxy?.$modal.msgWarning(response?.data?.message || response?.msg || '未检测到事件');
@@ -412,6 +488,96 @@ const handleExport = () => {
   }
 }
 
+/* 不安全事件卡片样式 */
+.unsafe-events-card {
+  border: 1px solid #f89898;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+
+  :deep(.el-card__header) {
+    background: linear-gradient(135deg, #fef0f0 0%, #fff5f5 100%);
+    border-bottom: 1px solid #f89898;
+  }
+}
+
+.unsafe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.unsafe-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #f56c6c;
+  font-size: 16px;
+}
+
+.unsafe-events-list {
+  :deep(.el-collapse) {
+    border: none;
+  }
+
+  :deep(.el-collapse-item__header) {
+    background: #fef0f0;
+    border-radius: 8px;
+    padding: 0 16px;
+    margin-bottom: 8px;
+    border: 1px solid #fde2e2;
+
+    &:hover {
+      background: #fde2e2;
+    }
+  }
+
+  :deep(.el-collapse-item__wrap) {
+    border: none;
+  }
+
+  :deep(.el-collapse-item__content) {
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 0 0 8px 8px;
+    margin-top: -8px;
+    margin-bottom: 8px;
+  }
+}
+
+.unsafe-event-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding-right: 16px;
+}
+
+.event-time {
+  color: #606266;
+  font-size: 13px;
+}
+
+.unsafe-event-content {
+  .report-content {
+    background: #ffffff;
+    border: 1px solid #ebeef5;
+    border-radius: 8px;
+    padding: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .report-text {
+    margin: 0;
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #303133;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+}
+
 /* 响应式布局 */
 @media (max-width: 1200px) {
   :deep(.el-col-lg-8) {
@@ -423,6 +589,11 @@ const handleExport = () => {
   :deep(.el-col-lg-16) {
     max-width: 100%;
     flex: 0 0 100%;
+  }
+
+  .unsafe-event-title {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }
 </style>

@@ -46,7 +46,7 @@ export interface VideoUploadResponse {
  */
 export function uploadVideo(data: FormData, onUploadProgress?: (progressEvent: any) => void) {
   return request({
-    url: '/camera/camera/management/upload',
+    url: 'camera/management/upload',
     method: 'post',
     data: data,
     headers: {
