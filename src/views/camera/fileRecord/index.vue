@@ -23,9 +23,7 @@
             </el-form-item>
             <el-form-item label="数据来源" prop="dataSource">
               <el-select v-model="queryParams.dataSource" placeholder="请选择数据来源" clearable style="width: 200px">
-                <el-option label="执法记录仪自动上传" value="auto" />
-                <el-option label="手动上传" value="manual" />
-                <el-option label="外部导入" value="import" />
+                <el-option v-for="dict in camera_data_source" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="AI检测状态" prop="aiCheckStatus">
@@ -91,9 +89,7 @@
         <el-table-column v-if="columns[7].visible" label="文件描述" align="center" prop="fileDescription" min-width="180" :show-overflow-tooltip="true" />
         <el-table-column v-if="columns[8].visible" label="数据来源" align="center" prop="dataSource" width="130">
           <template #default="scope">
-            <el-tag :type="getDataSourceType(scope.row.dataSource)" effect="plain">
-              {{ getDataSourceLabel(scope.row.dataSource) }}
-            </el-tag>
+            <dict-tag :options="camera_data_source" :value="scope.row.dataSource" />
           </template>
         </el-table-column>
         <el-table-column v-if="columns[9].visible" label="AI检测状态" align="center" prop="aiCheckStatus" width="110">
@@ -150,9 +146,7 @@
           <el-tag type="info" effect="plain">{{ detailData.mediaType?.toUpperCase() }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="数据来源">
-          <el-tag :type="getDataSourceType(detailData.dataSource)" effect="plain">
-            {{ getDataSourceLabel(detailData.dataSource) }}
-          </el-tag>
+          <dict-tag :options="camera_data_source" :value="detailData.dataSource" />
         </el-descriptions-item>
         <el-descriptions-item label="AI检测状态">
           <el-tag :type="getAiStatusType(detailData.aiCheckStatus)">
@@ -187,11 +181,12 @@
 </template>
 
 <script setup name="CameraFileRecord" lang="ts">
-import { listCameraManagement, delCameraManagement } from '@/api/camera/management';
+import { listCameraManagement, delCameraManagement, getVideoPlayUrl } from '@/api/camera/management';
 import { CameraManagementVO, CameraManagementQuery } from '@/api/camera/management/types';
 import { parseTime } from '@/utils/ruoyi';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
+const { camera_data_source } = toRefs<any>(proxy?.useDict('camera_data_source'));
 
 const loading = ref(true);
 const showSearch = ref(true);
@@ -285,10 +280,16 @@ const handleView = (row: CameraManagementVO) => {
 };
 
 /** 播放视频 */
-const handlePlay = (row: CameraManagementVO) => {
-  playDialog.title = `播放视频 - ${row.userName}`;
-  playDialog.url = row.storageLocation;
-  playDialog.visible = true;
+const handlePlay = async (row: CameraManagementVO) => {
+  try {
+    playDialog.title = `播放视频 - ${row.userName}`;
+    // 调用后端接口获取预签名URL
+    const res = await getVideoPlayUrl(row.videoId);
+    playDialog.url = res.data;
+    playDialog.visible = true;
+  } catch (error) {
+    proxy?.$modal.msgError('获取视频播放地址失败');
+  }
 };
 
 /** 关闭播放 */
@@ -308,8 +309,10 @@ const handleAnalysis = async (row: CameraManagementVO) => {
 
 /** 删除按钮操作 */
 const handleDelete = async (row?: CameraManagementVO) => {
-  const videoIds = row?.videoId || ids.value;
-  await proxy?.$modal.confirm('是否确认删除视频编号为"' + videoIds + '"的数据项？');
+  // 后端期望 Long[] 数组，确保传入数组格式
+  const videoIds = row?.videoId ? [row.videoId] : ids.value;
+  const displayIds = row?.videoId || ids.value;
+  await proxy?.$modal.confirm('是否确认删除视频编号为"' + displayIds + '"的数据项？');
   await delCameraManagement(videoIds);
   await getList();
   proxy?.$modal.msgSuccess('删除成功');
@@ -318,32 +321,12 @@ const handleDelete = async (row?: CameraManagementVO) => {
 /** 导出按钮操作 */
 const handleExport = () => {
   proxy?.download(
-    'camera/camera/management/export',
+    'camera/management/export',
     {
       ...queryParams.value
     },
     `camera_management_${new Date().getTime()}.xlsx`
   );
-};
-
-/** 获取数据来源标签 */
-const getDataSourceLabel = (dataSource: string) => {
-  const map: Record<string, string> = {
-    auto: '自动上传',
-    manual: '手动上传',
-    import: '外部导入'
-  };
-  return map[dataSource] || dataSource || '-';
-};
-
-/** 获取数据来源类型 */
-const getDataSourceType = (dataSource: string) => {
-  const map: Record<string, string> = {
-    auto: 'success',
-    manual: 'primary',
-    import: 'warning'
-  };
-  return map[dataSource] || 'info';
 };
 
 /** 获取AI状态标签 */
@@ -358,8 +341,8 @@ const getAiStatusLabel = (status: number) => {
 };
 
 /** 获取AI状态类型 */
-const getAiStatusType = (status: number) => {
-  const map: Record<number, string> = {
+const getAiStatusType = (status: number): 'info' | 'warning' | 'success' | 'danger' | 'primary' => {
+  const map: Record<number, 'info' | 'warning' | 'success' | 'danger'> = {
     0: 'info',
     1: 'warning',
     2: 'success',

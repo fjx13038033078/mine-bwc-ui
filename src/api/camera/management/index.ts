@@ -3,10 +3,10 @@ import { CameraManagementVO, CameraManagementQuery, CameraManagementForm } from 
 import { AxiosPromise } from 'axios';
 
 /**
- * ²éÑ¯Ö´·¨ÊÓÆµĞÅÏ¢¹ÜÀíÁĞ±í
- * @param query ²éÑ¯²ÎÊı
+ * æŸ¥è¯¢æ‰§æ³•è§†é¢‘ä¿¡æ¯ç®¡ç†åˆ—è¡¨
+ * @param query æŸ¥è¯¢å‚æ•°
  */
-export function listCameraManagement(query?: CameraManagementQuery): AxiosPromise<TableDataInfo<CameraManagementVO>> {
+export function listCameraManagement(query?: CameraManagementQuery): AxiosPromise<CameraManagementVO[]> {
   return request({
     url: 'camera/management/list',
     method: 'get',
@@ -15,8 +15,8 @@ export function listCameraManagement(query?: CameraManagementQuery): AxiosPromis
 }
 
 /**
- * ²éÑ¯Ö´·¨ÊÓÆµĞÅÏ¢¹ÜÀíÏêÏ¸
- * @param videoId ÊÓÆµID
+ * æŸ¥è¯¢æ‰§æ³•è§†é¢‘ä¿¡æ¯ç®¡ç†è¯¦ç»†
+ * @param videoId è§†é¢‘ID
  */
 export function getCameraManagement(videoId: number | string): AxiosPromise<CameraManagementVO> {
   return request({
@@ -26,8 +26,8 @@ export function getCameraManagement(videoId: number | string): AxiosPromise<Came
 }
 
 /**
- * ĞÂÔöÖ´·¨ÊÓÆµĞÅÏ¢¹ÜÀí
- * @param data ±íµ¥Êı¾İ
+ * æ–°å¢æ‰§æ³•è§†é¢‘ä¿¡æ¯ç®¡ç†
+ * @param data è¡¨å•æ•°æ®
  */
 export function addCameraManagement(data: CameraManagementForm): AxiosPromise<void> {
   return request({
@@ -38,31 +38,32 @@ export function addCameraManagement(data: CameraManagementForm): AxiosPromise<vo
 }
 
 /**
- * ĞŞ¸ÄÖ´·¨ÊÓÆµĞÅÏ¢¹ÜÀí
- * @param data ±íµ¥Êı¾İ
+ * ä¿®æ”¹æ‰§æ³•è§†é¢‘ä¿¡æ¯ç®¡ç†
+ * @param data è¡¨å•æ•°æ®
  */
 export function updateCameraManagement(data: CameraManagementForm): AxiosPromise<void> {
   return request({
-    url: 'camera/management',
-    method: 'put',
+    url: 'camera/management/edit',
+    method: 'post',
     data: data
   });
 }
 
 /**
- * É¾³ıÖ´·¨ÊÓÆµĞÅÏ¢¹ÜÀí
- * @param videoIds ÊÓÆµIDÊı×é
+ * åˆ é™¤æ‰§æ³•è§†é¢‘ä¿¡æ¯ç®¡ç†
+ * @param videoIds è§†é¢‘IDæ•°ç»„
  */
-export function delCameraManagement(videoIds: (number | string)[] | number | string): AxiosPromise<void> {
+export function delCameraManagement(videoIds: (number | string)[]): AxiosPromise<void> {
   return request({
-    url: 'camera/management/' + videoIds,
-    method: 'delete'
+    url: 'camera/management/remove',
+    method: 'post',
+    data: videoIds
   });
 }
 
 /**
- * µ¼³öÖ´·¨ÊÓÆµĞÅÏ¢¹ÜÀí
- * @param query ²éÑ¯²ÎÊı
+ * å¯¼å‡ºæ‰§æ³•è§†é¢‘ä¿¡æ¯ç®¡ç†
+ * @param query æŸ¥è¯¢å‚æ•°
  */
 export function exportCameraManagement(query?: CameraManagementQuery): AxiosPromise<Blob> {
   return request({
@@ -70,5 +71,16 @@ export function exportCameraManagement(query?: CameraManagementQuery): AxiosProm
     method: 'post',
     data: query,
     responseType: 'blob'
+  });
+}
+
+/**
+ * è·å–è§†é¢‘æ’­æ”¾URLï¼ˆé¢„ç­¾åURLï¼‰
+ * @param videoId è§†é¢‘ID
+ */
+export function getVideoPlayUrl(videoId: number | string): AxiosPromise<string> {
+  return request({
+    url: 'camera/management/playUrl/' + videoId,
+    method: 'get'
   });
 }

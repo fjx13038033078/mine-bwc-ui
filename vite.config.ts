@@ -24,8 +24,8 @@ export default defineConfig(({ mode, command }) => {
       open: true,
       proxy: {
         [env.VITE_APP_BASE_API]: {
-          // target: 'http://localhost:8080',
-          target: 'http://192.168.26.245:8080',
+          target: 'http://localhost:8080',
+          // target: 'http://192.168.26.245:8080',
           changeOrigin: true,
           ws: true,
           rewrite: (path) => path.replace(new RegExp('^' + env.VITE_APP_BASE_API), '')
