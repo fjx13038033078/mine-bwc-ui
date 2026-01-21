@@ -38,6 +38,16 @@ export interface CameraManagementVO {
   aiCheckStatus: number;
   /** AI检测结果（JSON结构化描述） */
   aiCheckResult: string;
+  /** 是否有违规行为（0:否,1:是） */
+  hasViolation?: number;
+  /** 违规类型 */
+  violationType?: string;
+  /** 违规截图URL */
+  screenshotUrl?: string;
+  /** AI检测耗时（秒） */
+  processTime?: number;
+  /** AI检测完成时间 */
+  checkTime?: string;
   /** 数据状态（1:正常,0:删除） */
   dataStatus: number;
   /** 创建时间 */

@@ -99,7 +99,18 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column v-if="columns[10].visible" label="上传时间" align="center" prop="uploadTime" width="160">
+        <el-table-column v-if="columns[10].visible" label="违规标记" align="center" prop="hasViolation" width="100">
+          <template #default="scope">
+            <template v-if="scope.row.aiCheckStatus === 2">
+              <el-tag v-if="scope.row.hasViolation === 1" type="danger" effect="dark">
+                <el-icon><Warning /></el-icon> 违规
+              </el-tag>
+              <el-tag v-else type="success" effect="plain">正常</el-tag>
+            </template>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="columns[11].visible" label="上传时间" align="center" prop="uploadTime" width="160">
           <template #default="scope">
             <span>{{ parseTime(scope.row.uploadTime) }}</span>
           </template>
@@ -133,7 +144,7 @@
     </el-card>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="detailDialog.visible" :title="detailDialog.title" width="700px" append-to-body>
+    <el-dialog v-model="detailDialog.visible" :title="detailDialog.title" width="800px" append-to-body>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="视频ID">{{ detailData.videoId }}</el-descriptions-item>
         <el-descriptions-item label="来源设备">{{ detailData.deviceId }}</el-descriptions-item>
@@ -153,14 +164,61 @@
             {{ getAiStatusLabel(detailData.aiCheckStatus) }}
           </el-tag>
         </el-descriptions-item>
+        <el-descriptions-item label="违规状态">
+          <template v-if="detailData.aiCheckStatus === 2">
+            <el-tag v-if="detailData.hasViolation === 1" type="danger" effect="dark">
+              <el-icon><Warning /></el-icon> 存在违规
+            </el-tag>
+            <el-tag v-else type="success" effect="plain">正常</el-tag>
+          </template>
+          <span v-else>-</span>
+        </el-descriptions-item>
+        <el-descriptions-item v-if="detailData.violationType" label="违规类型">
+          <el-tag type="danger">{{ detailData.violationType }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item v-if="detailData.processTime" label="检测耗时">
+          {{ detailData.processTime?.toFixed(2) }}秒
+        </el-descriptions-item>
+        <el-descriptions-item v-if="detailData.checkTime" label="检测时间">
+          {{ parseTime(detailData.checkTime) }}
+        </el-descriptions-item>
         <el-descriptions-item label="文件描述" :span="2">{{ detailData.fileDescription || '-' }}</el-descriptions-item>
         <el-descriptions-item label="存储位置" :span="2">
           <el-link type="primary" :underline="false">{{ detailData.storageLocation }}</el-link>
         </el-descriptions-item>
-        <el-descriptions-item v-if="detailData.aiCheckResult" label="AI检测结果" :span="2">
-          <pre class="ai-result-text">{{ formatAiResult(detailData.aiCheckResult) }}</pre>
-        </el-descriptions-item>
       </el-descriptions>
+
+      <!-- AI分析报告区域 -->
+      <div v-if="detailData.aiCheckStatus === 2" class="ai-report-section">
+        <el-divider content-position="left">
+          <el-icon><DataAnalysis /></el-icon> AI分析报告
+        </el-divider>
+
+        <!-- 违规截图展示 -->
+        <div v-if="detailData.screenshotUrl" class="screenshot-section">
+          <h4>关键帧截图</h4>
+          <el-image
+            :src="detailData.screenshotUrl"
+            :preview-src-list="[detailData.screenshotUrl]"
+            fit="contain"
+            class="violation-screenshot"
+          >
+            <template #error>
+              <div class="image-error">
+                <el-icon><Picture /></el-icon>
+                <span>截图加载失败</span>
+              </div>
+            </template>
+          </el-image>
+        </div>
+
+        <!-- AI分析结果 -->
+        <div v-if="detailData.aiCheckResult" class="result-section">
+          <h4>分析结果</h4>
+          <pre class="ai-result-text">{{ formatAiResult(detailData.aiCheckResult) }}</pre>
+        </div>
+      </div>
+
       <template #footer>
         <el-button @click="detailDialog.visible = false">关 闭</el-button>
       </template>
@@ -184,6 +242,7 @@
 import { listCameraManagement, delCameraManagement, getVideoPlayUrl } from '@/api/camera/management';
 import { CameraManagementVO, CameraManagementQuery } from '@/api/camera/management/types';
 import { parseTime } from '@/utils/ruoyi';
+import { Warning, DataAnalysis, Picture } from '@element-plus/icons-vue';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { camera_data_source } = toRefs<any>(proxy?.useDict('camera_data_source'));
@@ -211,7 +270,8 @@ const columns = ref<FieldOption[]>([
   { key: 7, label: '文件描述', visible: true, children: [] },
   { key: 8, label: '数据来源', visible: true, children: [] },
   { key: 9, label: 'AI检测状态', visible: true, children: [] },
-  { key: 10, label: '上传时间', visible: true, children: [] }
+  { key: 10, label: '违规标记', visible: true, children: [] },
+  { key: 11, label: '上传时间', visible: true, children: [] }
 ]);
 
 // 详情对话框
@@ -353,8 +413,13 @@ const getAiStatusType = (status: number): 'info' | 'warning' | 'success' | 'dang
 
 /** 格式化AI结果 */
 const formatAiResult = (result: string) => {
+  if (!result) return '-';
   try {
     const obj = JSON.parse(result);
+    // 如果是包装的JSON格式，提取description字段
+    if (obj.description) {
+      return obj.description;
+    }
     return JSON.stringify(obj, null, 2);
   } catch {
     return result;
@@ -379,6 +444,47 @@ onMounted(() => {
 .video-player {
   width: 100%;
   max-height: 450px;
+}
+
+.ai-report-section {
+  margin-top: 20px;
+
+  h4 {
+    margin: 12px 0 8px;
+    font-size: 14px;
+    color: #606266;
+  }
+}
+
+.screenshot-section {
+  margin-bottom: 16px;
+
+  .violation-screenshot {
+    width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    border: 1px solid #ebeef5;
+  }
+
+  .image-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    background: #f5f7fa;
+    color: #909399;
+    font-size: 14px;
+
+    .el-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+  }
+}
+
+.result-section {
+  margin-top: 12px;
 }
 
 .ai-result-text {
