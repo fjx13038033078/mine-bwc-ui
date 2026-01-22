@@ -23,8 +23,8 @@
           </div>
           <!-- 欢迎文字 -->
           <div class="welcome-text">
-            <h2 class="welcome-title">{{ proxy.$t('login.welcome') || '欢迎回来' }}</h2>
-            <p class="welcome-desc">{{ proxy.$t('login.welcomeDesc') || '智能管理系统' }}</p>
+            <h2 class="welcome-title">{{ proxy.$t('为安全保驾护航') || '欢迎回来' }}</h2>
+            <p class="welcome-desc">{{ proxy.$t('太行实验室研发团队') || '智能管理系统' }}</p>
           </div>
           <!-- 装饰性粒子 -->
           <div class="particles">
@@ -460,7 +460,7 @@ onMounted(() => {
   position: absolute;
   border-radius: 50%;
   border: 2px solid transparent;
-  
+
   &.ring-1 {
     width: 100%;
     height: 100%;
@@ -471,7 +471,7 @@ onMounted(() => {
     border-right-color: transparent;
     animation: rotate 8s linear infinite;
   }
-  
+
   &.ring-2 {
     width: 75%;
     height: 75%;
@@ -482,7 +482,7 @@ onMounted(() => {
     border-left-color: transparent;
     animation: rotate 6s linear infinite reverse;
   }
-  
+
   &.ring-3 {
     width: 50%;
     height: 50%;
@@ -544,13 +544,42 @@ onMounted(() => {
   border-radius: 50%;
   animation: particleFloat 6s ease-in-out infinite;
 
-  @for $i from 1 through 6 {
-    &.particle-#{$i} {
-      left: random(80) + 10%;
-      top: random(80) + 10%;
-      animation-delay: -#{$i * 0.8}s;
-      animation-duration: #{4 + random(4)}s;
-    }
+  // 粒子位置（使用固定值替代 random()，避免 Sass 弃用警告）
+  &.particle-1 {
+    left: 15%;
+    top: 25%;
+    animation-delay: -0.8s;
+    animation-duration: 5s;
+  }
+  &.particle-2 {
+    left: 75%;
+    top: 18%;
+    animation-delay: -1.6s;
+    animation-duration: 6s;
+  }
+  &.particle-3 {
+    left: 45%;
+    top: 70%;
+    animation-delay: -2.4s;
+    animation-duration: 7s;
+  }
+  &.particle-4 {
+    left: 85%;
+    top: 55%;
+    animation-delay: -3.2s;
+    animation-duration: 5.5s;
+  }
+  &.particle-5 {
+    left: 25%;
+    top: 80%;
+    animation-delay: -4s;
+    animation-duration: 6.5s;
+  }
+  &.particle-6 {
+    left: 60%;
+    top: 35%;
+    animation-delay: -4.8s;
+    animation-duration: 7.5s;
   }
 }
 
@@ -579,21 +608,21 @@ onMounted(() => {
   position: absolute;
   background: linear-gradient(90deg, transparent, rgba(0, 200, 255, 0.3), transparent);
   height: 1px;
-  
+
   &.line-1 {
     width: 60%;
     top: 20%;
     left: 20%;
     animation: linePulse 3s ease-in-out infinite;
   }
-  
+
   &.line-2 {
     width: 40%;
     bottom: 30%;
     right: 15%;
     animation: linePulse 3s ease-in-out infinite 1s;
   }
-  
+
   &.line-3 {
     width: 50%;
     bottom: 15%;
