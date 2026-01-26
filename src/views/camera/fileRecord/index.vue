@@ -86,7 +86,14 @@
             <el-tag type="info" effect="plain">{{ scope.row.mediaType?.toUpperCase() }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column v-if="columns[7].visible" label="文件描述" align="center" prop="fileDescription" min-width="180" :show-overflow-tooltip="true" />
+        <el-table-column
+          v-if="columns[7].visible"
+          label="文件描述"
+          align="center"
+          prop="fileDescription"
+          min-width="180"
+          :show-overflow-tooltip="true"
+        />
         <el-table-column v-if="columns[8].visible" label="数据来源" align="center" prop="dataSource" width="130">
           <template #default="scope">
             <dict-tag :options="camera_data_source" :value="scope.row.dataSource" />
@@ -176,9 +183,7 @@
         <el-descriptions-item v-if="detailData.violationType" label="违规类型">
           <el-tag type="danger">{{ detailData.violationType }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item v-if="detailData.processTime" label="检测耗时">
-          {{ detailData.processTime?.toFixed(2) }}秒
-        </el-descriptions-item>
+        <el-descriptions-item v-if="detailData.processTime" label="检测耗时"> {{ detailData.processTime?.toFixed(2) }}秒 </el-descriptions-item>
         <el-descriptions-item v-if="detailData.checkTime" label="检测时间">
           {{ parseTime(detailData.checkTime) }}
         </el-descriptions-item>
@@ -197,12 +202,7 @@
         <!-- 违规截图展示 -->
         <div v-if="detailData.screenshotUrl" class="screenshot-section">
           <h4>关键帧截图</h4>
-          <el-image
-            :src="detailData.screenshotUrl"
-            :preview-src-list="[detailData.screenshotUrl]"
-            fit="contain"
-            class="violation-screenshot"
-          >
+          <el-image :src="detailData.screenshotUrl" :preview-src-list="[detailData.screenshotUrl]" fit="contain" class="violation-screenshot">
             <template #error>
               <div class="image-error">
                 <el-icon><Picture /></el-icon>
@@ -227,9 +227,7 @@
     <!-- 视频播放对话框 -->
     <el-dialog v-model="playDialog.visible" :title="playDialog.title" width="800px" append-to-body @close="handleClosePlay">
       <div class="video-container">
-        <video v-if="playDialog.visible" ref="videoRef" :src="playDialog.url" controls autoplay class="video-player">
-          您的浏览器不支持视频播放
-        </video>
+        <video v-if="playDialog.visible" ref="videoRef" :src="playDialog.url" controls autoplay class="video-player">您的浏览器不支持视频播放</video>
       </div>
       <template #footer>
         <el-button @click="playDialog.visible = false">关 闭</el-button>

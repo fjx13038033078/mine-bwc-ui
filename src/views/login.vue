@@ -23,7 +23,7 @@
           </div>
           <!-- 欢迎文字 -->
           <div class="welcome-text">
-            <h2 class="welcome-title">{{ proxy.$t('为安全保驾护航') || '欢迎回来' }}</h2>
+            <h2 class="welcome-title">{{ proxy.$t('技术赋能安全') || '欢迎回来' }}</h2>
             <p class="welcome-desc">{{ proxy.$t('太行实验室研发团队') || '智能管理系统' }}</p>
           </div>
           <!-- 装饰性粒子 -->
