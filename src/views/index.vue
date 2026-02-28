@@ -1,165 +1,705 @@
 <template>
-  <div class="app-container home">
-    <el-row :gutter="20">
-      <el-col :sm="24" :lg="12" style="padding-left: 20px">
-        <h2>执法记录仪AI视频检测系统</h2>
-        <p>
-          RuoYi-Vue-Plus 是基于 RuoYi-Vue 针对 分布式集群 场景升级(不兼容原框架)
-          <br />
-          * 前端开发框架 Vue3、TS、Element Plus<br />
-          * 后端开发框架 Spring Boot<br />
-          * 容器框架 Undertow 基于 Netty 的高性能容器<br />
-          * 权限认证框架 Sa-Token 支持多终端认证系统<br />
-          * 关系数据库 MySQL 适配 8.X 最低 5.7<br />
-          * 缓存数据库 Redis 适配 6.X 最低 4.X<br />
-          * 数据库框架 Mybatis-Plus 快速 CRUD 增加开发效率<br />
-          * 数据库框架 p6spy 更强劲的 SQL 分析<br />
-          * 多数据源框架 dynamic-datasource 支持主从与多种类数据库异构<br />
-          * 序列化框架 Jackson 统一使用 jackson 高效可靠<br />
-          * Redis客户端 Redisson 性能强劲、API丰富<br />
-          * 分布式限流 Redisson 全局、请求IP、集群ID 多种限流<br />
-          * 分布式锁 Lock4j 注解锁、工具锁 多种多样<br />
-          * 分布式幂等 Lock4j 基于分布式锁实现<br />
-          * 分布式链路追踪 SkyWalking 支持链路追踪、网格分析、度量聚合、可视化<br />
-          * 分布式任务调度 SnailJob 高性能 高可靠 易扩展<br />
-          * 文件存储 Minio 本地存储<br />
-          * 文件存储 七牛、阿里、腾讯 云存储<br />
-          * 监控框架 SpringBoot-Admin 全方位服务监控<br />
-          * 校验框架 Validation 增强接口安全性 严谨性<br />
-          * Excel框架 FastExcel(原Alibaba EasyExcel) 性能优异 扩展性强<br />
-          * 文档框架 SpringDoc、javadoc 无注解零入侵基于java注释<br />
-          * 工具类框架 Hutool、Lombok 减少代码冗余 增加安全性<br />
-          * 代码生成器 适配MP、SpringDoc规范化代码 一键生成前后端代码<br />
-          * 部署方式 Docker 容器编排 一键部署业务集群<br />
-          * 国际化 SpringMessage Spring标准国际化方案<br />
-        </p>
-        <p><b>当前版本:</b> <span>v5.5.1</span></p>
-        <p>
-          <el-tag type="danger">&yen;免费开源</el-tag>
-        </p>
-        <p>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://gitee.com/dromara/RuoYi-Vue-Plus')">访问码云</el-button>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://github.com/dromara/RuoYi-Vue-Plus')">访问GitHub</el-button>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://plus-doc.dromara.org/#/ruoyi-vue-plus/changlog')"
-            >更新日志</el-button
-          >
-        </p>
-      </el-col>
+  <div class="dashboard">
+    <!-- 顶部标题栏 -->
+    <div class="dashboard-header">
+      <div class="header-left">
+        <span class="header-dot"></span>
+        <span class="header-sub">VIDEO AI DETECTION SYSTEM</span>
+      </div>
+      <h1 class="header-title">执法视频 AI 智能检测数据大屏</h1>
+      <div class="header-right">
+        <span class="header-time">{{ currentTime }}</span>
+        <span class="header-dot"></span>
+      </div>
+    </div>
 
-      <el-col :sm="24" :lg="12" style="padding-left: 20px">
-        <h2>RuoYi-Cloud-Plus多租户微服务管理系统</h2>
-        <p>
-          RuoYi-Cloud-Plus 微服务通用权限管理系统 重写 RuoYi-Cloud 全方位升级(不兼容原框架)
-          <br />
-          * 前端开发框架 Vue3、TS、Element UI<br />
-          * 后端开发框架 Spring Boot<br />
-          * 微服务开发框架 Spring Cloud、Spring Cloud Alibaba<br />
-          * 容器框架 Undertow 基于 XNIO 的高性能容器<br />
-          * 权限认证框架 Sa-Token、Jwt 支持多终端认证系统<br />
-          * 关系数据库 MySQL 适配 8.X 最低 5.7<br />
-          * 关系数据库 Oracle 适配 11g 12c<br />
-          * 关系数据库 PostgreSQL 适配 13 14<br />
-          * 关系数据库 SQLServer 适配 2017 2019<br />
-          * 缓存数据库 Redis 适配 6.X 最低 5.X<br />
-          * 分布式注册中心 Alibaba Nacos 采用2.X 基于GRPC通信高性能<br />
-          * 分布式配置中心 Alibaba Nacos 采用2.X 基于GRPC通信高性能<br />
-          * 服务网关 Spring Cloud Gateway 响应式高性能网关<br />
-          * 负载均衡 Spring Cloud Loadbalancer 负载均衡处理<br />
-          * RPC远程调用 Apache Dubbo 原生态使用体验、高性能<br />
-          * 分布式限流熔断 Alibaba Sentinel 无侵入、高扩展<br />
-          * 分布式事务 Alibaba Seata 无侵入、高扩展 支持 四种模式<br />
-          * 分布式消息队列 Apache Kafka 高性能高速度<br />
-          * 分布式消息队列 Apache RocketMQ 高可用功能多样<br />
-          * 分布式消息队列 RabbitMQ 支持各种扩展插件功能多样性<br />
-          * 分布式搜索引擎 ElasticSearch 业界知名<br />
-          * 分布式链路追踪 Apache SkyWalking 链路追踪、网格分析、度量聚合、可视化<br />
-          * 分布式日志中心 ELK 业界成熟解决方案<br />
-          * 分布式监控 Prometheus、Grafana 全方位性能监控<br />
-          * 其余与 Vue 版本一致<br />
-        </p>
-        <p><b>当前版本:</b> <span>v2.5.1</span></p>
-        <p>
-          <el-tag type="danger">&yen;免费开源</el-tag>
-        </p>
-        <p>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://gitee.com/dromara/RuoYi-Cloud-Plus')">访问码云</el-button>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://github.com/dromara/RuoYi-Cloud-Plus')">访问GitHub</el-button>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://plus-doc.dromara.org/#/ruoyi-cloud-plus/changlog')"
-            >更新日志</el-button
-          >
-        </p>
-      </el-col>
-    </el-row>
-    <el-divider />
+    <!-- 核心指标卡片 -->
+    <div class="stat-row">
+      <div v-for="item in statCards" :key="item.label" class="stat-card">
+        <div class="stat-icon" :style="{ background: item.gradient }">
+          <el-icon :size="24"><component :is="item.icon" /></el-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value" :style="{ color: item.color }">{{ animatedValues[item.key] ?? item.value }}</span>
+          <span class="stat-label">{{ item.label }}</span>
+        </div>
+        <div class="stat-trend" v-if="item.trend">
+          <span :class="['trend-tag', item.trendUp ? 'up' : 'down']">
+            {{ item.trendUp ? '&#9650;' : '&#9660;' }} {{ item.trend }}
+          </span>
+          <span class="trend-hint">较昨日</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="chart-row">
+      <div class="chart-card span-5">
+        <div class="card-header">
+          <span class="card-dot"></span>
+          <span class="card-title">检测趋势（近7天）</span>
+        </div>
+        <div ref="trendChartRef" class="chart-body"></div>
+      </div>
+      <div class="chart-card span-3">
+        <div class="card-header">
+          <span class="card-dot"></span>
+          <span class="card-title">违规类型分布</span>
+        </div>
+        <div ref="pieChartRef" class="chart-body"></div>
+      </div>
+      <div class="chart-card span-4">
+        <div class="card-header">
+          <span class="card-dot"></span>
+          <span class="card-title">部门检测统计</span>
+        </div>
+        <div ref="barChartRef" class="chart-body"></div>
+      </div>
+    </div>
+
+    <!-- 底部区域 -->
+    <div class="bottom-row">
+      <!-- 最新检测记录 -->
+      <div class="chart-card span-7">
+        <div class="card-header">
+          <span class="card-dot pulse"></span>
+          <span class="card-title">最新检测记录</span>
+          <span class="card-badge">实时</span>
+        </div>
+        <div class="record-list">
+          <div v-for="(record, index) in recentRecords" :key="index" class="record-item">
+            <span class="record-time">{{ record.time }}</span>
+            <span :class="['record-status', statusClass(record.status)]">{{ record.statusText }}</span>
+            <span class="record-name" :title="record.fileName">{{ record.fileName }}</span>
+            <span class="record-user">{{ record.userName }}</span>
+            <span :class="['record-result', resultClass(record)]">{{ record.resultText }}</span>
+          </div>
+          <div v-if="recentRecords.length === 0" class="record-empty">暂无检测记录</div>
+        </div>
+      </div>
+
+      <!-- 系统状态 -->
+      <div class="chart-card span-5">
+        <div class="card-header">
+          <span class="card-dot"></span>
+          <span class="card-title">系统运行状态</span>
+        </div>
+        <div class="system-status">
+          <div v-for="item in systemStatus" :key="item.label" class="status-item">
+            <div class="status-label">{{ item.label }}</div>
+            <div class="status-bar-wrap">
+              <div class="status-bar" :style="{ width: item.percent + '%', background: item.barColor }"></div>
+            </div>
+            <div class="status-value" :style="{ color: item.valueColor }">{{ item.display }}</div>
+          </div>
+          <div class="status-footer">
+            <div v-for="svc in serviceStatus" :key="svc.name" class="svc-item">
+              <span :class="['svc-dot', svc.ok ? 'online' : 'offline']"></span>
+              <span class="svc-name">{{ svc.name }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup name="Index" lang="ts">
-const goTarget = (url: string) => {
-  window.open(url, '__blank');
-};
+<script setup lang="ts" name="Index">
+import { ref, onMounted, onUnmounted, markRaw, shallowRef } from 'vue';
+import * as echarts from 'echarts';
+import { VideoCamera, DataAnalysis, Warning, CircleCheck, Timer, Document } from '@element-plus/icons-vue';
+import { getDashboardStats, type DashboardStatsVO, type RecordItem } from '@/api/camera/dashboard';
+
+// ======================== 时钟 ========================
+const currentTime = ref('');
+let clockTimer: ReturnType<typeof setInterval>;
+
+function updateClock() {
+  const now = new Date();
+  currentTime.value = now.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    + '  ' + now.toLocaleTimeString('zh-CN', { hour12: false });
+}
+
+// ======================== 指标数据 ========================
+interface StatCard {
+  key: string;
+  label: string;
+  value: number | string;
+  icon: any;
+  color: string;
+  gradient: string;
+  trend?: string;
+  trendUp?: boolean;
+}
+
+const statCards = ref<StatCard[]>([
+  { key: 'total', label: '视频总量', value: 0, icon: markRaw(VideoCamera), color: '#00d4ff', gradient: 'linear-gradient(135deg,#0a3d6b,#00d4ff33)' },
+  { key: 'checked', label: '已检测数', value: 0, icon: markRaw(CircleCheck), color: '#00e396', gradient: 'linear-gradient(135deg,#0a4d3b,#00e39633)' },
+  { key: 'violation', label: '违规视频', value: 0, icon: markRaw(Warning), color: '#ff4560', gradient: 'linear-gradient(135deg,#4d1a2a,#ff456033)' },
+  { key: 'rate', label: '检测通过率', value: '--', icon: markRaw(DataAnalysis), color: '#feb019', gradient: 'linear-gradient(135deg,#4d3a0a,#feb01933)' },
+  { key: 'today', label: '今日新增', value: 0, icon: markRaw(Document), color: '#775dd0', gradient: 'linear-gradient(135deg,#2a1f4d,#775dd033)' },
+  { key: 'avgTime', label: '平均处理时长', value: '--', icon: markRaw(Timer), color: '#00d4ff', gradient: 'linear-gradient(135deg,#0a3d6b,#00d4ff33)' },
+]);
+
+const animatedValues = ref<Record<string, string | number>>({});
+const recentRecords = ref<RecordItem[]>([]);
+
+// 服务端返回的图表原始数据
+let serverData: DashboardStatsVO | null = null;
+
+function statusClass(status: number) {
+  if (status === 2) return 'done';
+  if (status === 1) return 'running';
+  if (status === 3) return 'fail';
+  return 'pending';
+}
+
+function resultClass(record: RecordItem) {
+  if (record.status === 2) return record.hasViolation === 1 ? 'danger' : 'safe';
+  if (record.status === 1) return 'pending';
+  if (record.status === 3) return 'danger';
+  return 'pending';
+}
+
+function animateNumber(key: string, target: number) {
+  let current = 0;
+  const step = Math.max(1, Math.floor(target / 40));
+  const timer = setInterval(() => {
+    current += step;
+    if (current >= target) {
+      current = target;
+      clearInterval(timer);
+    }
+    animatedValues.value[key] = current;
+  }, 30);
+}
+
+function applyStats(data: DashboardStatsVO) {
+  serverData = data;
+
+  // 更新指标卡片
+  const cardMap: Record<string, { value: number | string; trend?: string; trendUp?: boolean }> = {
+    total: { value: data.totalVideos },
+    checked: { value: data.checkedCount },
+    violation: { value: data.violationCount },
+    rate: { value: data.passRate },
+    today: { value: data.todayNew },
+    avgTime: { value: data.avgProcessTime },
+  };
+
+  // 计算今日趋势
+  if (data.yesterdayNew > 0) {
+    const diff = ((data.todayNew - data.yesterdayNew) / data.yesterdayNew * 100);
+    cardMap.today.trend = Math.abs(diff).toFixed(1) + '%';
+    cardMap.today.trendUp = diff >= 0;
+  }
+
+  statCards.value.forEach(card => {
+    const update = cardMap[card.key];
+    if (!update) return;
+    card.value = update.value;
+    if (update.trend !== undefined) {
+      card.trend = update.trend;
+      card.trendUp = update.trendUp;
+    }
+    if (typeof update.value === 'number') {
+      animateNumber(card.key, update.value);
+    } else {
+      animatedValues.value[card.key] = update.value;
+    }
+  });
+
+  // 最新记录
+  recentRecords.value = data.recentRecords || [];
+}
+
+// ======================== 系统状态（暂用假数据） ========================
+const systemStatus = ref([
+  { label: 'CPU 使用率', percent: 42, display: '42%', barColor: '#00d4ff', valueColor: '#00d4ff' },
+  { label: '内存使用率', percent: 68, display: '68%', barColor: '#00e396', valueColor: '#00e396' },
+  { label: 'GPU 使用率', percent: 85, display: '85%', barColor: '#feb019', valueColor: '#feb019' },
+  { label: '磁盘使用率', percent: 53, display: '53%', barColor: '#775dd0', valueColor: '#775dd0' },
+  { label: '消息队列积压', percent: 12, display: '3条', barColor: '#00d4ff', valueColor: '#00d4ff' },
+]);
+
+const serviceStatus = ref([
+  { name: 'Java 后端', ok: true },
+  { name: 'FastAPI 服务', ok: true },
+  { name: 'RabbitMQ', ok: true },
+  { name: 'MinIO 存储', ok: true },
+  { name: 'AI 模型服务', ok: true },
+  { name: 'Nacos 注册中心', ok: true },
+]);
+
+// ======================== ECharts ========================
+const trendChartRef = ref<HTMLElement>();
+const pieChartRef = ref<HTMLElement>();
+const barChartRef = ref<HTMLElement>();
+
+const chartInstances = shallowRef<echarts.ECharts[]>([]);
+
+const CHART_TEXT_COLOR = '#8899aa';
+const CHART_LINE_COLOR = '#1a2a3a';
+const PIE_COLORS = ['#ff4560', '#feb019', '#775dd0', '#00d4ff', '#00e396', '#f9a825', '#ab47bc'];
+
+function initTrendChart() {
+  if (!trendChartRef.value || !serverData) return;
+  const chart = echarts.init(trendChartRef.value);
+  const trend = serverData.trendData || [];
+
+  chart.setOption({
+    tooltip: { trigger: 'axis', backgroundColor: '#0d1b2aee', borderColor: '#0099ff44', textStyle: { color: '#ccc' } },
+    grid: { top: 30, right: 20, bottom: 30, left: 50 },
+    xAxis: {
+      type: 'category',
+      data: trend.map(t => t.date),
+      axisLine: { lineStyle: { color: CHART_LINE_COLOR } },
+      axisLabel: { color: CHART_TEXT_COLOR },
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: CHART_LINE_COLOR } },
+      axisLabel: { color: CHART_TEXT_COLOR },
+    },
+    series: [
+      {
+        name: '检测数量', type: 'line', smooth: true, symbol: 'circle', symbolSize: 8,
+        data: trend.map(t => t.total),
+        lineStyle: { width: 3, color: '#00d4ff' },
+        itemStyle: { color: '#00d4ff', borderWidth: 2 },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: '#00d4ff33' }, { offset: 1, color: '#00d4ff05' }
+        ]) },
+      },
+      {
+        name: '违规数量', type: 'line', smooth: true, symbol: 'circle', symbolSize: 8,
+        data: trend.map(t => t.violations),
+        lineStyle: { width: 3, color: '#ff4560' },
+        itemStyle: { color: '#ff4560', borderWidth: 2 },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: '#ff456033' }, { offset: 1, color: '#ff456005' }
+        ]) },
+      },
+    ],
+  });
+  return chart;
+}
+
+function initPieChart() {
+  if (!pieChartRef.value || !serverData) return;
+  const chart = echarts.init(pieChartRef.value);
+  const types = serverData.violationTypes || [];
+
+  const pieData = types.length > 0
+    ? types.map((t, i) => ({ value: t.count, name: t.name, itemStyle: { color: PIE_COLORS[i % PIE_COLORS.length] } }))
+    : [{ value: 1, name: '暂无违规数据', itemStyle: { color: '#334455' } }];
+
+  chart.setOption({
+    tooltip: { trigger: 'item', backgroundColor: '#0d1b2aee', borderColor: '#0099ff44', textStyle: { color: '#ccc' } },
+    legend: { bottom: 0, textStyle: { color: CHART_TEXT_COLOR, fontSize: 11 }, itemWidth: 12, itemHeight: 8 },
+    series: [{
+      type: 'pie', radius: ['42%', '70%'], center: ['50%', '45%'],
+      label: { color: CHART_TEXT_COLOR, fontSize: 11 },
+      labelLine: { lineStyle: { color: '#334455' } },
+      itemStyle: { borderColor: '#0d1b2a', borderWidth: 2 },
+      data: pieData,
+    }],
+  });
+  return chart;
+}
+
+function initBarChart() {
+  if (!barChartRef.value || !serverData) return;
+  const chart = echarts.init(barChartRef.value);
+  const depts = serverData.deptStats || [];
+
+  const deptNames = depts.map(d => d.deptName);
+  const checkedData = depts.map(d => d.checked);
+  const violationData = depts.map(d => d.violations);
+
+  chart.setOption({
+    tooltip: { trigger: 'axis', backgroundColor: '#0d1b2aee', borderColor: '#0099ff44', textStyle: { color: '#ccc' } },
+    grid: { top: 20, right: 20, bottom: 30, left: 80 },
+    xAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: CHART_LINE_COLOR } },
+      axisLabel: { color: CHART_TEXT_COLOR },
+    },
+    yAxis: {
+      type: 'category',
+      data: deptNames,
+      axisLine: { lineStyle: { color: CHART_LINE_COLOR } },
+      axisLabel: { color: CHART_TEXT_COLOR, fontSize: 11 },
+    },
+    series: [
+      {
+        name: '已检测', type: 'bar', barWidth: 14, stack: 'total',
+        data: checkedData,
+        itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: '#0099ff' }, { offset: 1, color: '#00d4ff' }
+        ]) },
+      },
+      {
+        name: '违规', type: 'bar', barWidth: 14, stack: 'total',
+        data: violationData,
+        itemStyle: { color: '#ff456099', borderRadius: [0, 3, 3, 0] },
+      },
+    ],
+  });
+  return chart;
+}
+
+// ======================== 数据加载 ========================
+async function loadDashboardData() {
+  try {
+    const { data } = await getDashboardStats();
+    applyStats(data);
+    // 数据就绪后初始化图表
+    const c1 = initTrendChart();
+    const c2 = initPieChart();
+    const c3 = initBarChart();
+    chartInstances.value = [c1, c2, c3].filter(Boolean) as echarts.ECharts[];
+  } catch (e) {
+    console.error('大屏数据加载失败:', e);
+  }
+}
+
+// ======================== 生命周期 ========================
+let resizeHandler: () => void;
+let refreshTimer: ReturnType<typeof setInterval>;
+
+onMounted(() => {
+  updateClock();
+  clockTimer = setInterval(updateClock, 1000);
+
+  loadDashboardData();
+  // 每60秒自动刷新数据
+  refreshTimer = setInterval(loadDashboardData, 60000);
+
+  resizeHandler = () => chartInstances.value.forEach(c => c.resize());
+  window.addEventListener('resize', resizeHandler);
+});
+
+onUnmounted(() => {
+  clearInterval(clockTimer);
+  clearInterval(refreshTimer);
+  window.removeEventListener('resize', resizeHandler);
+  chartInstances.value.forEach(c => c.dispose());
+});
 </script>
 
 <style lang="scss" scoped>
-.home {
-  blockquote {
-    padding: 10px 20px;
-    margin: 0 0 20px;
-    font-size: 17.5px;
-    border-left: 5px solid #eee;
-  }
-  hr {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    border: 0;
-    border-top: 1px solid #eee;
-  }
-  .col-item {
-    margin-bottom: 20px;
-  }
+/* ==================== 全局变量 ==================== */
+$bg-primary: #0a0e1a;
+$bg-card: #0d1b2aee;
+$border-color: #0f3460;
+$accent: #00d4ff;
+$accent2: #0099ff;
+$text-primary: #e0e8f0;
+$text-secondary: #6b7d8e;
+$safe-color: #00e396;
+$danger-color: #ff4560;
+$pending-color: #feb019;
 
-  ul {
-    padding: 0;
-    margin: 0;
-  }
+/* ==================== 容器 ==================== */
+.dashboard {
+  min-height: calc(100vh - 84px);
+  background: $bg-primary;
+  background-image:
+    linear-gradient(rgba(0, 153, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 153, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  padding: 12px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: $text-primary;
+  font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
 
-  font-family: 'open sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+/* ==================== 头部 ==================== */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 24px;
+  background: linear-gradient(90deg, transparent, $bg-card, transparent);
+  border-bottom: 1px solid $border-color;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, $accent, transparent);
+  }
+}
+.header-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 6px;
+  background: linear-gradient(90deg, $accent2, $accent, #fff, $accent, $accent2);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: headerShine 4s linear infinite;
+}
+@keyframes headerShine {
+  to { background-position: 200% center; }
+}
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 200px;
+}
+.header-right { justify-content: flex-end; }
+.header-sub { color: $text-secondary; font-size: 11px; letter-spacing: 2px; }
+.header-time { color: $accent; font-size: 14px; font-family: 'Courier New', monospace; letter-spacing: 1px; }
+.header-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $accent;
+  box-shadow: 0 0 6px $accent;
+}
+
+/* ==================== 指标卡片 ==================== */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+.stat-card {
+  background: $bg-card;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, $accent2, transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  &:hover {
+    border-color: $accent2;
+    box-shadow: 0 0 20px rgba(0, 153, 255, 0.1);
+    &::before { opacity: 1; }
+  }
+}
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'DIN Alternate', 'Courier New', monospace;
+  line-height: 1.2;
+}
+.stat-label { font-size: 12px; color: $text-secondary; white-space: nowrap; }
+.stat-trend {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.trend-tag {
+  font-size: 12px;
+  font-weight: 600;
+  &.up { color: $safe-color; }
+  &.down { color: $danger-color; }
+}
+.trend-hint { font-size: 10px; color: $text-secondary; }
+
+/* ==================== 卡片通用 ==================== */
+.chart-card {
+  background: $bg-card;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.3s;
+  &:hover { border-color: rgba(0, 153, 255, 0.3); }
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1a2a3a;
+}
+.card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: $accent;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+
+  &.pulse { animation: dotPulse 1.5s ease-in-out infinite; }
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px $accent; }
+  50% { opacity: 0.4; box-shadow: 0 0 2px $accent; }
+}
+.card-title { font-size: 14px; font-weight: 500; color: $text-primary; }
+.card-badge {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: rgba(0, 212, 255, 0.15);
+  color: $accent;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+/* ==================== 图表行 ==================== */
+.chart-row, .bottom-row {
+  display: grid;
+  gap: 12px;
+  flex: 1;
+}
+.chart-row { grid-template-columns: 5fr 3fr 4fr; min-height: 240px; }
+.bottom-row { grid-template-columns: 7fr 5fr; min-height: 220px; }
+.chart-body { flex: 1; min-height: 0; }
+
+/* ==================== 检测记录列表 ==================== */
+.record-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: $border-color; border-radius: 3px; }
+}
+.record-item {
+  display: grid;
+  grid-template-columns: 70px 72px 1fr 60px 90px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.2s;
+  &:hover { background: rgba(0, 153, 255, 0.08); }
+}
+.record-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $text-secondary;
   font-size: 13px;
-  color: #676a6c;
-  overflow-x: hidden;
+}
+.record-time { color: $text-secondary; font-family: 'Courier New', monospace; }
+.record-name { color: $text-primary; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.record-user { color: $text-secondary; text-align: center; }
+.record-status {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  text-align: center;
+  &.done { color: $safe-color; background: rgba(0, 227, 150, 0.1); }
+  &.running { color: $pending-color; background: rgba(254, 176, 25, 0.1); }
+  &.fail { color: $danger-color; background: rgba(255, 69, 96, 0.1); }
+  &.pending { color: $text-secondary; background: rgba(255, 255, 255, 0.05); }
+}
+.record-result {
+  text-align: right;
+  font-weight: 500;
+  &.safe { color: $safe-color; }
+  &.danger { color: $danger-color; }
+  &.pending { color: $text-secondary; }
+}
 
-  ul {
-    list-style-type: none;
-  }
+/* ==================== 系统状态 ==================== */
+.system-status {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 4px;
+}
+.status-item {
+  display: grid;
+  grid-template-columns: 90px 1fr 50px;
+  align-items: center;
+  gap: 12px;
+}
+.status-label { font-size: 12px; color: $text-secondary; }
+.status-bar-wrap {
+  height: 6px;
+  background: #1a2a3a;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.status-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1.5s ease-out;
+}
+.status-value { font-size: 13px; font-weight: 600; text-align: right; font-family: 'Courier New', monospace; }
 
-  h4 {
-    margin-top: 0px;
-  }
+.status-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #1a2a3a;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.svc-item { display: flex; align-items: center; gap: 6px; }
+.svc-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  &.online { background: $safe-color; box-shadow: 0 0 6px rgba(0, 227, 150, 0.5); }
+  &.offline { background: $danger-color; box-shadow: 0 0 6px rgba(255, 69, 96, 0.5); }
+}
+.svc-name { font-size: 11px; color: $text-secondary; }
 
-  h2 {
-    margin-top: 10px;
-    font-size: 26px;
-    font-weight: 100;
-  }
-
-  p {
-    margin-top: 10px;
-
-    b {
-      font-weight: 700;
-    }
-  }
-
-  .update-log {
-    ol {
-      display: block;
-      list-style-type: decimal;
-      margin-block-start: 1em;
-      margin-block-end: 1em;
-      margin-inline-start: 0;
-      margin-inline-end: 0;
-      padding-inline-start: 40px;
-    }
-  }
+/* ==================== 响应式 ==================== */
+@media (max-width: 1400px) {
+  .stat-row { grid-template-columns: repeat(3, 1fr); }
+  .chart-row { grid-template-columns: 1fr 1fr; }
+  .bottom-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  .chart-row { grid-template-columns: 1fr; }
 }
 </style>
