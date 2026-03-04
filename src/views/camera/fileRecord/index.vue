@@ -90,14 +90,14 @@
             <el-tag type="info" effect="plain">{{ scope.row.mediaType?.toUpperCase() }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column
-          v-if="columns[7].visible"
-          label="文件描述"
-          align="center"
-          prop="fileDescription"
-          min-width="180"
-          :show-overflow-tooltip="true"
-        />
+<!--        <el-table-column-->
+<!--          v-if="columns[7].visible"-->
+<!--          label="文件描述"-->
+<!--          align="center"-->
+<!--          prop="fileDescription"-->
+<!--          min-width="180"-->
+<!--          :show-overflow-tooltip="true"-->
+<!--        />-->
         <el-table-column v-if="columns[8].visible" label="数据来源" align="center" prop="dataSource" width="130">
           <template #default="scope">
             <dict-tag :options="camera_data_source" :value="scope.row.dataSource" />
@@ -121,6 +121,17 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
+        <el-table-column v-if="columns[13].visible" label="复判状态" align="center" prop="reviewStatus" width="100">
+          <template #default="scope">
+            <template v-if="scope.row.aiCheckStatus === 2">
+              <el-tag v-if="scope.row.reviewStatus === 1" :type="scope.row.reviewResult === 0 ? 'success' : 'danger'">
+                {{ scope.row.reviewResult === 0 ? '复判正常' : '复判违规' }}
+              </el-tag>
+              <el-tag v-else type="info" effect="plain">未复判</el-tag>
+            </template>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column v-if="columns[11].visible" label="上传时间" align="center" prop="uploadTime" width="160">
           <template #default="scope">
             <span>{{ parseTime(scope.row.uploadTime) }}</span>
@@ -134,14 +145,14 @@
             <el-tooltip content="播放视频" placement="top">
               <el-button v-hasPermi="['camera:management:query']" link type="primary" icon="VideoPlay" @click="handlePlay(scope.row)" />
             </el-tooltip>
-            <el-tooltip content="AI分析" placement="top">
+            <el-tooltip content="人工复判" placement="top">
               <el-button
                 v-hasPermi="['camera:management:edit']"
                 link
                 type="primary"
-                icon="DataAnalysis"
-                :disabled="scope.row.aiCheckStatus === 1"
-                @click="handleAnalysis(scope.row)"
+                icon="EditPen"
+                :disabled="scope.row.aiCheckStatus !== 2"
+                @click="handleReview(scope.row)"
               />
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
@@ -224,8 +235,109 @@
         </div>
       </div>
 
+      <!-- 人工复判记录 -->
+      <div v-if="detailData.reviewStatus === 1" class="ai-report-section">
+        <el-divider content-position="left">
+          <el-icon><EditPen /></el-icon> 人工复判记录
+        </el-divider>
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="复判结果">
+            <el-tag :type="detailData.reviewResult === 0 ? 'success' : 'danger'" effect="dark">
+              {{ detailData.reviewResult === 0 ? '正常（纠正为无违规）' : '确认违规' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="复判人">{{ detailData.reviewerName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="复判时间">{{ parseTime(detailData.reviewTime) }}</el-descriptions-item>
+          <el-descriptions-item label="复判说明" :span="2">{{ detailData.reviewComment || '-' }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+
       <template #footer>
         <el-button @click="detailDialog.visible = false">关 闭</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 人工复判对话框 -->
+    <el-dialog v-model="reviewDialog.visible" :title="reviewDialog.title" width="900px" append-to-body @close="handleCloseReview">
+      <div class="review-layout">
+        <!-- 左侧：视频播放 + AI结果 -->
+        <div class="review-left">
+          <div class="video-container" style="margin-bottom: 12px">
+            <video v-if="reviewDialog.visible && reviewDialog.url" ref="reviewVideoRef" :src="reviewDialog.url" controls class="video-player">
+              您的浏览器不支持视频播放
+            </video>
+            <div v-else class="video-placeholder">
+              <el-icon :size="48" color="#909399"><VideoPlay /></el-icon>
+              <span>加载视频中...</span>
+            </div>
+          </div>
+
+          <!-- AI 原始判定 -->
+          <el-card shadow="never" class="ai-summary-card">
+            <template #header><span style="font-weight: 600">AI 原始判定</span></template>
+            <el-descriptions :column="1" size="small" border>
+              <el-descriptions-item label="违规判定">
+                <el-tag v-if="reviewData.hasViolation === 1" type="danger" effect="dark">违规</el-tag>
+                <el-tag v-else type="success" effect="plain">正常</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item v-if="reviewData.violationType" label="违规类型">{{ reviewData.violationType }}</el-descriptions-item>
+              <el-descriptions-item v-if="reviewData.aiCheckResult" label="分析描述">
+                <div class="ai-result-text" style="max-height: 120px">{{ formatAiResult(reviewData.aiCheckResult) }}</div>
+              </el-descriptions-item>
+            </el-descriptions>
+            <div v-if="reviewData.screenshotUrl" style="margin-top: 8px">
+              <span style="font-size: 13px; color: #606266">关键帧截图：</span>
+              <el-image :src="reviewData.screenshotUrl" :preview-src-list="[reviewData.screenshotUrl]" fit="contain"
+                style="width: 100%; max-height: 160px; margin-top: 4px; border-radius: 4px; border: 1px solid #ebeef5" />
+            </div>
+          </el-card>
+        </div>
+
+        <!-- 右侧：复判表单 -->
+        <div class="review-right">
+          <el-card shadow="never">
+            <template #header><span style="font-weight: 600">复判表单</span></template>
+            <el-form ref="reviewFormRef" :model="reviewForm" :rules="reviewRules" label-position="top">
+              <el-form-item label="您的判定" prop="reviewResult">
+                <el-radio-group v-model="reviewForm.reviewResult" size="large">
+                  <el-radio-button :value="0">
+                    <el-icon><CircleCheck /></el-icon> 正常（无违规）
+                  </el-radio-button>
+                  <el-radio-button :value="1">
+                    <el-icon><Warning /></el-icon> 确认违规
+                  </el-radio-button>
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item label="复判说明" prop="reviewComment">
+                <el-input
+                  v-model="reviewForm.reviewComment"
+                  type="textarea"
+                  :rows="5"
+                  maxlength="500"
+                  show-word-limit
+                  placeholder="请描述您的判定依据（选填）"
+                />
+              </el-form-item>
+
+              <!-- 已有复判记录提示 -->
+              <el-alert
+                v-if="reviewData.reviewStatus === 1"
+                type="warning"
+                :closable="false"
+                style="margin-bottom: 16px"
+              >
+                <template #title>
+                  该视频已于 {{ parseTime(reviewData.reviewTime) }} 由 {{ reviewData.reviewerName }} 复判过，
+                  结果为「{{ reviewData.reviewResult === 0 ? '正常' : '违规' }}」。再次提交将覆盖上次结果。
+                </template>
+              </el-alert>
+            </el-form>
+          </el-card>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="reviewDialog.visible = false">取 消</el-button>
+        <el-button type="primary" :loading="reviewSubmitting" @click="handleSubmitReview">提交复判</el-button>
       </template>
     </el-dialog>
 
@@ -242,10 +354,10 @@
 </template>
 
 <script setup name="CameraFileRecord" lang="ts">
-import { listCameraManagement, delCameraManagement, getVideoPlayUrl } from '@/api/camera/management';
-import { CameraManagementVO, CameraManagementQuery } from '@/api/camera/management/types';
+import { listCameraManagement, delCameraManagement, getVideoPlayUrl, submitManualReview } from '@/api/camera/management';
+import { CameraManagementVO, CameraManagementQuery, ManualReviewForm } from '@/api/camera/management/types';
 import { parseTime } from '@/utils/ruoyi';
-import { Warning, DataAnalysis, Picture } from '@element-plus/icons-vue';
+import { Warning, DataAnalysis, Picture, EditPen, CircleCheck, VideoPlay } from '@element-plus/icons-vue';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { camera_data_source } = toRefs<any>(proxy?.useDict('camera_data_source'));
@@ -275,7 +387,8 @@ const columns = ref<FieldOption[]>([
   { key: 9, label: 'AI检测状态', visible: true, children: [] },
   { key: 10, label: '违规标记', visible: true, children: [] },
   { key: 11, label: '上传时间', visible: true, children: [] },
-  { key: 12, label: '视频序列号', visible: true, children: [] }
+  { key: 12, label: '视频序列号', visible: true, children: [] },
+  { key: 13, label: '复判状态', visible: true, children: [] }
 ]);
 
 // 详情对话框
@@ -365,11 +478,72 @@ const handleClosePlay = () => {
   playDialog.url = '';
 };
 
-/** AI分析 */
-const handleAnalysis = async (row: CameraManagementVO) => {
-  await proxy?.$modal.confirm(`是否对视频"${row.videoId}"进行AI分析？`);
-  // TODO: 调用AI分析接口
-  proxy?.$modal.msgSuccess('已提交AI分析任务');
+// ============== 人工复判 ==============
+const reviewVideoRef = ref<HTMLVideoElement>();
+const reviewFormRef = ref<ElFormInstance>();
+const reviewSubmitting = ref(false);
+
+const reviewDialog = reactive({
+  visible: false,
+  title: '人工复判',
+  url: ''
+});
+
+const reviewData = ref<Partial<CameraManagementVO>>({});
+
+const reviewForm = reactive<ManualReviewForm>({
+  videoId: 0,
+  reviewResult: 0,
+  reviewComment: ''
+});
+
+const reviewRules = reactive({
+  reviewResult: [{ required: true, message: '请选择复判结果', trigger: 'change' }]
+});
+
+/** 打开复判对话框 */
+const handleReview = async (row: CameraManagementVO) => {
+  reviewData.value = row;
+  reviewForm.videoId = row.videoId;
+  reviewForm.reviewResult = row.hasViolation === 1 ? 1 : 0;
+  reviewForm.reviewComment = '';
+  reviewDialog.title = `人工复判 - ${row.userName || ''}（ID: ${row.videoId}）`;
+
+  try {
+    const res = await getVideoPlayUrl(row.videoId);
+    reviewDialog.url = res.data;
+  } catch {
+    reviewDialog.url = '';
+  }
+  reviewDialog.visible = true;
+};
+
+/** 提交复判 */
+const handleSubmitReview = async () => {
+  const valid = await reviewFormRef.value?.validate();
+  if (!valid) return;
+
+  await proxy?.$modal.confirm('确认提交复判结果？提交后将更新该视频的最终判定。');
+  reviewSubmitting.value = true;
+  try {
+    await submitManualReview(reviewForm);
+    proxy?.$modal.msgSuccess('复判提交成功');
+    reviewDialog.visible = false;
+    await getList();
+  } catch {
+    proxy?.$modal.msgError('复判提交失败');
+  } finally {
+    reviewSubmitting.value = false;
+  }
+};
+
+/** 关闭复判对话框 */
+const handleCloseReview = () => {
+  if (reviewVideoRef.value) {
+    reviewVideoRef.value.pause();
+  }
+  reviewDialog.url = '';
+  reviewFormRef.value?.resetFields();
 };
 
 /** 删除按钮操作 */
@@ -503,5 +677,49 @@ onMounted(() => {
   word-wrap: break-word;
   max-height: 200px;
   overflow-y: auto;
+}
+
+.review-layout {
+  display: flex;
+  gap: 16px;
+
+  .review-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .review-right {
+    width: 320px;
+    flex-shrink: 0;
+  }
+}
+
+.ai-summary-card {
+  :deep(.el-card__header) {
+    padding: 10px 16px;
+    background: #fafafa;
+  }
+
+  :deep(.el-card__body) {
+    padding: 12px;
+  }
+}
+
+.video-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 280px;
+  background: #000;
+  border-radius: 8px;
+  color: #909399;
+  gap: 8px;
+}
+
+:deep(.el-radio-button__inner) {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 </style>

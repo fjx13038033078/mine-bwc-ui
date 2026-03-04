@@ -58,6 +58,18 @@ export interface CameraManagementVO {
   ossId?: number;
   /** 文件URL（通过ossId翻译获取） */
   url?: string;
+  /** 复判状态（0未复判 1已复判） */
+  reviewStatus?: number;
+  /** 复判结果（0正常无违规 1确认违规） */
+  reviewResult?: number;
+  /** 复判说明 */
+  reviewComment?: string;
+  /** 复判人ID */
+  reviewerId?: number;
+  /** 复判人名称 */
+  reviewerName?: string;
+  /** 复判时间 */
+  reviewTime?: string;
 }
 
 /**
@@ -127,4 +139,16 @@ export interface CameraManagementForm {
   aiCheckResult?: string;
   /** 数据状态 */
   dataStatus?: number;
+}
+
+/**
+ * 人工复判 表单
+ */
+export interface ManualReviewForm {
+  /** 视频ID */
+  videoId: number;
+  /** 复判结果（0正常无违规 1确认违规） */
+  reviewResult: number;
+  /** 复判说明 */
+  reviewComment?: string;
 }

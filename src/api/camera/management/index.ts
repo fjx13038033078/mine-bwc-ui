@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import { CameraManagementVO, CameraManagementQuery, CameraManagementForm } from './types';
+import { CameraManagementVO, CameraManagementQuery, CameraManagementForm, ManualReviewForm } from './types';
 import { AxiosPromise } from 'axios';
 
 /**
@@ -82,5 +82,17 @@ export function getVideoPlayUrl(videoId: number | string): AxiosPromise<string> 
   return request({
     url: 'camera/management/playUrl/' + videoId,
     method: 'get'
+  });
+}
+
+/**
+ * 提交人工复判结果
+ * @param data 复判表单
+ */
+export function submitManualReview(data: ManualReviewForm): AxiosPromise<void> {
+  return request({
+    url: 'camera/management/review',
+    method: 'post',
+    data: data
   });
 }
