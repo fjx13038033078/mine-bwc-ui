@@ -8,6 +8,8 @@
 export interface CameraManagementVO {
   /** 视频ID（唯一标识） */
   videoId: number;
+  /** 视频唯一序列号（从文件名解析，如 Q541062） */
+  serialNumber: string;
   /** 来源设备 */
   deviceId: string;
   /** 用户编号/执法人员编号（采集者/使用者） */
@@ -62,6 +64,8 @@ export interface CameraManagementVO {
  * 执法视频信息 查询参数
  */
 export interface CameraManagementQuery extends PageQuery {
+  /** 视频序列号 */
+  serialNumber?: string;
   /** 来源设备 */
   deviceId?: string;
   /** 用户编号/执法人员编号 */
@@ -91,6 +95,8 @@ export interface CameraManagementQuery extends PageQuery {
 export interface CameraManagementForm {
   /** 视频ID */
   videoId?: number;
+  /** 视频序列号 */
+  serialNumber?: string;
   /** 来源设备 */
   deviceId?: string;
   /** 用户编号 */

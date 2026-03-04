@@ -4,6 +4,9 @@
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
           <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="90px">
+            <el-form-item label="视频序列号" prop="serialNumber">
+              <el-input v-model="queryParams.serialNumber" placeholder="请输入视频序列号" clearable style="width: 200px" @keyup.enter="handleQuery" />
+            </el-form-item>
             <el-form-item label="用户姓名" prop="userName">
               <el-input v-model="queryParams.userName" placeholder="请输入用户姓名" clearable style="width: 200px" @keyup.enter="handleQuery" />
             </el-form-item>
@@ -72,6 +75,7 @@
       <el-table v-loading="loading" :data="dataList" border @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50" align="center" />
         <el-table-column v-if="columns[0].visible" label="视频ID" align="center" prop="videoId" width="80" />
+        <el-table-column v-if="columns[12].visible" label="视频序列号" align="center" prop="serialNumber" width="130" :show-overflow-tooltip="true" />
         <el-table-column v-if="columns[1].visible" label="用户姓名" align="center" prop="userName" width="100" :show-overflow-tooltip="true" />
         <el-table-column v-if="columns[2].visible" label="用户编号" align="center" prop="userCode" width="110" :show-overflow-tooltip="true" />
         <el-table-column v-if="columns[3].visible" label="来源设备" align="center" prop="deviceId" width="120" :show-overflow-tooltip="true" />
@@ -154,9 +158,10 @@
     <el-dialog v-model="detailDialog.visible" :title="detailDialog.title" width="800px" append-to-body>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="视频ID">{{ detailData.videoId }}</el-descriptions-item>
+        <el-descriptions-item label="视频序列号">{{ detailData.serialNumber || '-' }}</el-descriptions-item>
         <el-descriptions-item label="来源设备">{{ detailData.deviceId }}</el-descriptions-item>
-        <el-descriptions-item label="用户姓名">{{ detailData.userName }}</el-descriptions-item>
         <el-descriptions-item label="用户编号">{{ detailData.userCode }}</el-descriptions-item>
+        <el-descriptions-item label="用户姓名">{{ detailData.userName }}</el-descriptions-item>
         <el-descriptions-item label="拍摄时间">{{ parseTime(detailData.shootTime) }}</el-descriptions-item>
         <el-descriptions-item label="上传时间">{{ parseTime(detailData.uploadTime) }}</el-descriptions-item>
         <el-descriptions-item label="视频时长">{{ detailData.durationDisplay }}</el-descriptions-item>
@@ -269,7 +274,8 @@ const columns = ref<FieldOption[]>([
   { key: 8, label: '数据来源', visible: true, children: [] },
   { key: 9, label: 'AI检测状态', visible: true, children: [] },
   { key: 10, label: '违规标记', visible: true, children: [] },
-  { key: 11, label: '上传时间', visible: true, children: [] }
+  { key: 11, label: '上传时间', visible: true, children: [] },
+  { key: 12, label: '视频序列号', visible: true, children: [] }
 ]);
 
 // 详情对话框
@@ -291,6 +297,7 @@ const playDialog = reactive({
 const queryParams = ref<CameraManagementQuery>({
   pageNum: 1,
   pageSize: 10,
+  serialNumber: undefined,
   userName: undefined,
   userCode: undefined,
   deviceId: undefined,
