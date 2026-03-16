@@ -33,6 +33,16 @@ export interface RecordItem {
   resultText: string;
 }
 
+/** 违规视频项（四宫格展示） */
+export interface ViolationVideoItem {
+  videoId: number;
+  playUrl: string;
+  violationStartSecond?: number;
+  violationEndSecond?: number;
+  violationType?: string;
+  fileName?: string;
+}
+
 /** 大屏统计数据 */
 export interface DashboardStatsVO {
   totalVideos: number;
@@ -46,6 +56,7 @@ export interface DashboardStatsVO {
   violationTypes: TypeItem[];
   deptStats: DeptItem[];
   recentRecords: RecordItem[];
+  recentViolationVideos?: ViolationVideoItem[];
 }
 
 /**

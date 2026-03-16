@@ -44,6 +44,10 @@ export interface CameraManagementVO {
   hasViolation?: number;
   /** 违规类型 */
   violationType?: string;
+  /** 违规行为起始时间点（秒） */
+  violationStartSecond?: number;
+  /** 违规行为结束时间点（秒） */
+  violationEndSecond?: number;
   /** 违规截图URL */
   screenshotUrl?: string;
   /** AI检测耗时（秒） */

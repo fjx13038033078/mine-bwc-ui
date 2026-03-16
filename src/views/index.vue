@@ -32,28 +32,65 @@
       </div>
     </div>
 
-    <!-- 图表区域 -->
-    <div class="chart-row">
-      <div class="chart-card span-5">
+    <!-- 主内容区：四宫格视频 + 图表 -->
+    <div class="main-content">
+      <!-- 左上角：最近违规视频四宫格（最显眼） -->
+      <div class="video-grid-panel">
         <div class="card-header">
-          <span class="card-dot"></span>
-          <span class="card-title">检测趋势（近7天）</span>
+          <span class="card-dot pulse"></span>
+          <span class="card-title">最近违规视频</span>
+          <span class="card-badge">循环播放</span>
         </div>
-        <div ref="trendChartRef" class="chart-body"></div>
+        <div class="video-grid">
+          <div
+            v-for="(item, idx) in recentViolationVideos"
+            :key="item.videoId"
+            class="video-cell"
+          >
+            <video
+              :ref="(el) => setVideoRef(el, idx)"
+              class="violation-video"
+              muted
+              loop
+              playsinline
+              :src="item.playUrl"
+              @loadedmetadata="onVideoLoaded($event, idx)"
+              @timeupdate="onVideoTimeUpdate($event, idx)"
+            />
+            <div class="video-overlay">
+              <span class="video-type">{{ item.violationType || '违规' }}</span>
+              <span class="video-time">{{ formatViolationTime(item) }}</span>
+            </div>
+          </div>
+          <div v-if="recentViolationVideos.length === 0" class="video-empty">
+            暂无违规视频
+          </div>
+        </div>
       </div>
-      <div class="chart-card span-3">
-        <div class="card-header">
-          <span class="card-dot"></span>
-          <span class="card-title">违规类型分布</span>
+
+      <!-- 右侧：统计图表（纵向排版，为视频留足空间） -->
+      <div class="charts-panel">
+        <div class="chart-card">
+          <div class="card-header">
+            <span class="card-dot"></span>
+            <span class="card-title">检测趋势（近7天）</span>
+          </div>
+          <div ref="trendChartRef" class="chart-body"></div>
         </div>
-        <div ref="pieChartRef" class="chart-body"></div>
-      </div>
-      <div class="chart-card span-4">
-        <div class="card-header">
-          <span class="card-dot"></span>
-          <span class="card-title">部门检测统计</span>
+        <div class="chart-card">
+          <div class="card-header">
+            <span class="card-dot"></span>
+            <span class="card-title">违规类型分布</span>
+          </div>
+          <div ref="pieChartRef" class="chart-body"></div>
         </div>
-        <div ref="barChartRef" class="chart-body"></div>
+        <div class="chart-card">
+          <div class="card-header">
+            <span class="card-dot"></span>
+            <span class="card-title">部门检测统计</span>
+          </div>
+          <div ref="barChartRef" class="chart-body"></div>
+        </div>
       </div>
     </div>
 
@@ -105,10 +142,10 @@
 </template>
 
 <script setup lang="ts" name="Index">
-import { ref, onMounted, onUnmounted, markRaw, shallowRef } from 'vue';
+import { ref, onMounted, onUnmounted, onActivated, nextTick, markRaw, shallowRef } from 'vue';
 import * as echarts from 'echarts';
 import { VideoCamera, DataAnalysis, Warning, CircleCheck, Timer, Document } from '@element-plus/icons-vue';
-import { getDashboardStats, type DashboardStatsVO, type RecordItem } from '@/api/camera/dashboard';
+import { getDashboardStats, type DashboardStatsVO, type RecordItem, type ViolationVideoItem } from '@/api/camera/dashboard';
 
 // ======================== 时钟 ========================
 const currentTime = ref('');
@@ -143,6 +180,8 @@ const statCards = ref<StatCard[]>([
 
 const animatedValues = ref<Record<string, string | number>>({});
 const recentRecords = ref<RecordItem[]>([]);
+const recentViolationVideos = ref<ViolationVideoItem[]>([]);
+const videoRefs = ref<(HTMLVideoElement | null)[]>([]);
 
 // 服务端返回的图表原始数据
 let serverData: DashboardStatsVO | null = null;
@@ -159,6 +198,54 @@ function resultClass(record: RecordItem) {
   if (record.status === 1) return 'pending';
   if (record.status === 3) return 'danger';
   return 'pending';
+}
+
+// 违规视频四宫格：格式化起止时间
+function formatViolationTime(item: ViolationVideoItem): string {
+  const start = item.violationStartSecond;
+  const end = item.violationEndSecond;
+  if (start == null && end == null) return '--';
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return m > 0 ? `${m}:${sec.toString().padStart(2, '0')}` : `0:${sec.toString().padStart(2, '0')}`;
+  };
+  if (start != null && end != null) return `${fmt(start)} - ${fmt(end)}`;
+  if (start != null) return `从 ${fmt(start)}`;
+  if (end != null) return `至 ${fmt(end)}`;
+  return '--';
+}
+
+// 视频 ref 收集（Vue 3 函数式 ref）
+function setVideoRef(el: unknown, idx: number) {
+  if (!el || !(el instanceof HTMLVideoElement)) return;
+  const arr = videoRefs.value;
+  while (arr.length <= idx) arr.push(null);
+  arr[idx] = el;
+}
+
+// 视频加载后：若有起止时间，从 start 开始播放
+function onVideoLoaded(_ev: Event, idx: number) {
+  const item = recentViolationVideos.value[idx];
+  const video = videoRefs.value[idx] as HTMLVideoElement | undefined;
+  if (!video || !item) return;
+  const start = item.violationStartSecond;
+  if (start != null && start > 0) {
+    video.currentTime = Math.min(start, video.duration || 0);
+  }
+  video.play().catch(() => {});
+}
+
+// 视频播放中：若有起止时间且超出 end，循环回 start
+function onVideoTimeUpdate(_ev: Event, idx: number) {
+  const item = recentViolationVideos.value[idx];
+  const video = videoRefs.value[idx] as HTMLVideoElement | undefined;
+  if (!video || !item) return;
+  const start = item.violationStartSecond ?? 0;
+  const end = item.violationEndSecond;
+  if (end != null && end > start && video.currentTime >= end) {
+    video.currentTime = start;
+  }
 }
 
 function animateNumber(key: string, target: number) {
@@ -211,6 +298,9 @@ function applyStats(data: DashboardStatsVO) {
 
   // 最新记录
   recentRecords.value = data.recentRecords || [];
+  // 最近违规视频（四宫格）
+  recentViolationVideos.value = data.recentViolationVideos || [];
+  videoRefs.value = [];
 }
 
 // ======================== 系统状态（暂用假数据） ========================
@@ -366,7 +456,13 @@ async function loadDashboardData() {
 
 // ======================== 生命周期 ========================
 let resizeHandler: () => void;
+let visibilityHandler: () => void;
 let refreshTimer: ReturnType<typeof setInterval>;
+
+// 恢复所有视频播放（切换页面/标签页回来时调用）
+function resumeVideos() {
+  videoRefs.value.forEach((v) => v?.play().catch(() => {}));
+}
 
 onMounted(() => {
   updateClock();
@@ -378,12 +474,25 @@ onMounted(() => {
 
   resizeHandler = () => chartInstances.value.forEach(c => c.resize());
   window.addEventListener('resize', resizeHandler);
+
+  // 标签页重新可见时恢复视频播放
+  visibilityHandler = () => {
+    if (document.visibilityState === 'visible') resumeVideos();
+  };
+  document.addEventListener('visibilitychange', visibilityHandler);
+});
+
+onActivated(() => {
+  // keep-alive 激活时（从其他路由切回首页）立即恢复视频
+  nextTick(() => resumeVideos());
+  chartInstances.value.forEach(c => c?.resize());
 });
 
 onUnmounted(() => {
   clearInterval(clockTimer);
   clearInterval(refreshTimer);
   window.removeEventListener('resize', resizeHandler);
+  document.removeEventListener('visibilitychange', visibilityHandler);
   chartInstances.value.forEach(c => c.dispose());
 });
 </script>
@@ -583,6 +692,100 @@ $pending-color: #feb019;
   border: 1px solid rgba(0, 212, 255, 0.3);
 }
 
+/* ==================== 主内容区 ==================== */
+.main-content {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 0.7fr);
+  gap: 12px;
+  flex: 1;
+  min-height: 480px;
+}
+
+.video-grid-panel {
+  background: $bg-card;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.3s;
+  border-left: 3px solid $danger-color;
+  &:hover { border-color: rgba(255, 69, 96, 0.4); }
+}
+
+.video-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  min-height: 400px;
+}
+
+.video-cell {
+  position: relative;
+  background: #0a0e1a;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid $border-color;
+}
+
+.violation-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.video-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 8px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.video-type {
+  color: $danger-color;
+  font-weight: 500;
+}
+
+.video-time {
+  color: $text-secondary;
+  font-family: 'Courier New', monospace;
+}
+
+.video-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $text-secondary;
+  font-size: 14px;
+  min-height: 380px;
+}
+
+.charts-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.charts-panel .chart-card {
+  flex: 1;
+  min-height: 140px;
+}
+
+.charts-panel .chart-card .chart-body {
+  min-height: 120px;
+}
+
 /* ==================== 图表行 ==================== */
 .chart-row, .bottom-row {
   display: grid;
@@ -695,11 +898,13 @@ $pending-color: #feb019;
 /* ==================== 响应式 ==================== */
 @media (max-width: 1400px) {
   .stat-row { grid-template-columns: repeat(3, 1fr); }
-  .chart-row { grid-template-columns: 1fr 1fr; }
+  .main-content { grid-template-columns: 1fr; }
+  .charts-panel .chart-card { min-height: 160px; }
   .bottom-row { grid-template-columns: 1fr; }
 }
 @media (max-width: 900px) {
   .stat-row { grid-template-columns: repeat(2, 1fr); }
-  .chart-row { grid-template-columns: 1fr; }
+  .video-grid-panel { min-width: 0; }
+  .main-content { grid-template-columns: 1fr; }
 }
 </style>

@@ -90,14 +90,7 @@
             <el-tag type="info" effect="plain">{{ scope.row.mediaType?.toUpperCase() }}</el-tag>
           </template>
         </el-table-column>
-<!--        <el-table-column-->
-<!--          v-if="columns[7].visible"-->
-<!--          label="文件描述"-->
-<!--          align="center"-->
-<!--          prop="fileDescription"-->
-<!--          min-width="180"-->
-<!--          :show-overflow-tooltip="true"-->
-<!--        />-->
+
         <el-table-column v-if="columns[8].visible" label="数据来源" align="center" prop="dataSource" width="130">
           <template #default="scope">
             <dict-tag :options="camera_data_source" :value="scope.row.dataSource" />
@@ -199,6 +192,9 @@
         <el-descriptions-item v-if="detailData.violationType" label="违规类型">
           <el-tag type="danger">{{ detailData.violationType }}</el-tag>
         </el-descriptions-item>
+        <el-descriptions-item v-if="detailData.hasViolation === 1 && (detailData.violationStartSecond != null || detailData.violationEndSecond != null)" label="违规时间点">
+          {{ formatViolationTime(detailData.violationStartSecond, detailData.violationEndSecond) }}
+        </el-descriptions-item>
         <el-descriptions-item v-if="detailData.processTime" label="检测耗时"> {{ detailData.processTime?.toFixed(2) }}秒 </el-descriptions-item>
         <el-descriptions-item v-if="detailData.checkTime" label="检测时间">
           {{ parseTime(detailData.checkTime) }}
@@ -287,8 +283,12 @@
             </el-descriptions>
             <div v-if="reviewData.screenshotUrl" style="margin-top: 8px">
               <span style="font-size: 13px; color: #606266">关键帧截图：</span>
-              <el-image :src="reviewData.screenshotUrl" :preview-src-list="[reviewData.screenshotUrl]" fit="contain"
-                style="width: 100%; max-height: 160px; margin-top: 4px; border-radius: 4px; border: 1px solid #ebeef5" />
+              <el-image
+                :src="reviewData.screenshotUrl"
+                :preview-src-list="[reviewData.screenshotUrl]"
+                fit="contain"
+                style="width: 100%; max-height: 160px; margin-top: 4px; border-radius: 4px; border: 1px solid #ebeef5"
+              />
             </div>
           </el-card>
         </div>
@@ -320,15 +320,11 @@
               </el-form-item>
 
               <!-- 已有复判记录提示 -->
-              <el-alert
-                v-if="reviewData.reviewStatus === 1"
-                type="warning"
-                :closable="false"
-                style="margin-bottom: 16px"
-              >
+              <el-alert v-if="reviewData.reviewStatus === 1" type="warning" :closable="false" style="margin-bottom: 16px">
                 <template #title>
-                  该视频已于 {{ parseTime(reviewData.reviewTime) }} 由 {{ reviewData.reviewerName }} 复判过，
-                  结果为「{{ reviewData.reviewResult === 0 ? '正常' : '违规' }}」。再次提交将覆盖上次结果。
+                  该视频已于 {{ parseTime(reviewData.reviewTime) }} 由 {{ reviewData.reviewerName }} 复判过， 结果为「{{
+                    reviewData.reviewResult === 0 ? '正常' : '违规'
+                  }}」。再次提交将覆盖上次结果。
                 </template>
               </el-alert>
             </el-form>
@@ -603,6 +599,19 @@ const formatAiResult = (result: string) => {
   } catch {
     return result;
   }
+};
+
+/** 格式化违规时间点（秒 -> MM:SS） */
+const formatViolationTime = (startSec?: number, endSec?: number) => {
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  };
+  if (startSec != null && endSec != null) return `${fmt(startSec)} - ${fmt(endSec)}`;
+  if (startSec != null) return `起始 ${fmt(startSec)}`;
+  if (endSec != null) return `结束 ${fmt(endSec)}`;
+  return '-';
 };
 
 onMounted(() => {
