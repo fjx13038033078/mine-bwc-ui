@@ -24,9 +24,7 @@
           <span class="stat-label">{{ item.label }}</span>
         </div>
         <div class="stat-trend" v-if="item.trend">
-          <span :class="['trend-tag', item.trendUp ? 'up' : 'down']">
-            {{ item.trendUp ? '&#9650;' : '&#9660;' }} {{ item.trend }}
-          </span>
+          <span :class="['trend-tag', item.trendUp ? 'up' : 'down']"> {{ item.trendUp ? '&#9650;' : '&#9660;' }} {{ item.trend }} </span>
           <span class="trend-hint">较昨日</span>
         </div>
       </div>
@@ -42,11 +40,7 @@
           <span class="card-badge">循环播放</span>
         </div>
         <div class="video-grid">
-          <div
-            v-for="(item, idx) in recentViolationVideos"
-            :key="item.videoId"
-            class="video-cell"
-          >
+          <div v-for="(item, idx) in recentViolationVideos" :key="item.videoId" class="video-cell">
             <video
               :ref="(el) => setVideoRef(el, idx)"
               class="violation-video"
@@ -62,9 +56,7 @@
               <span class="video-time">{{ formatViolationTime(item) }}</span>
             </div>
           </div>
-          <div v-if="recentViolationVideos.length === 0" class="video-empty">
-            暂无违规视频
-          </div>
+          <div v-if="recentViolationVideos.length === 0" class="video-empty">暂无违规视频</div>
         </div>
       </div>
 
@@ -153,8 +145,10 @@ let clockTimer: ReturnType<typeof setInterval>;
 
 function updateClock() {
   const now = new Date();
-  currentTime.value = now.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
-    + '  ' + now.toLocaleTimeString('zh-CN', { hour12: false });
+  currentTime.value =
+    now.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }) +
+    '  ' +
+    now.toLocaleTimeString('zh-CN', { hour12: false });
 }
 
 // ======================== 指标数据 ========================
@@ -171,11 +165,32 @@ interface StatCard {
 
 const statCards = ref<StatCard[]>([
   { key: 'total', label: '视频总量', value: 0, icon: markRaw(VideoCamera), color: '#00d4ff', gradient: 'linear-gradient(135deg,#0a3d6b,#00d4ff33)' },
-  { key: 'checked', label: '已检测数', value: 0, icon: markRaw(CircleCheck), color: '#00e396', gradient: 'linear-gradient(135deg,#0a4d3b,#00e39633)' },
+  {
+    key: 'checked',
+    label: '已检测数',
+    value: 0,
+    icon: markRaw(CircleCheck),
+    color: '#00e396',
+    gradient: 'linear-gradient(135deg,#0a4d3b,#00e39633)'
+  },
   { key: 'violation', label: '违规视频', value: 0, icon: markRaw(Warning), color: '#ff4560', gradient: 'linear-gradient(135deg,#4d1a2a,#ff456033)' },
-  { key: 'rate', label: '检测通过率', value: '--', icon: markRaw(DataAnalysis), color: '#feb019', gradient: 'linear-gradient(135deg,#4d3a0a,#feb01933)' },
+  {
+    key: 'rate',
+    label: '检测通过率',
+    value: '--',
+    icon: markRaw(DataAnalysis),
+    color: '#feb019',
+    gradient: 'linear-gradient(135deg,#4d3a0a,#feb01933)'
+  },
   { key: 'today', label: '今日新增', value: 0, icon: markRaw(Document), color: '#775dd0', gradient: 'linear-gradient(135deg,#2a1f4d,#775dd033)' },
-  { key: 'avgTime', label: '平均处理时长', value: '--', icon: markRaw(Timer), color: '#00d4ff', gradient: 'linear-gradient(135deg,#0a3d6b,#00d4ff33)' },
+  {
+    key: 'avgTime',
+    label: '平均处理时长',
+    value: '--',
+    icon: markRaw(Timer),
+    color: '#00d4ff',
+    gradient: 'linear-gradient(135deg,#0a3d6b,#00d4ff33)'
+  }
 ]);
 
 const animatedValues = ref<Record<string, string | number>>({});
@@ -271,17 +286,17 @@ function applyStats(data: DashboardStatsVO) {
     violation: { value: data.violationCount },
     rate: { value: data.passRate },
     today: { value: data.todayNew },
-    avgTime: { value: data.avgProcessTime },
+    avgTime: { value: data.avgProcessTime }
   };
 
   // 计算今日趋势
   if (data.yesterdayNew > 0) {
-    const diff = ((data.todayNew - data.yesterdayNew) / data.yesterdayNew * 100);
+    const diff = ((data.todayNew - data.yesterdayNew) / data.yesterdayNew) * 100;
     cardMap.today.trend = Math.abs(diff).toFixed(1) + '%';
     cardMap.today.trendUp = diff >= 0;
   }
 
-  statCards.value.forEach(card => {
+  statCards.value.forEach((card) => {
     const update = cardMap[card.key];
     if (!update) return;
     card.value = update.value;
@@ -309,7 +324,7 @@ const systemStatus = ref([
   { label: '内存使用率', percent: 68, display: '68%', barColor: '#00e396', valueColor: '#00e396' },
   { label: 'GPU 使用率', percent: 85, display: '85%', barColor: '#feb019', valueColor: '#feb019' },
   { label: '磁盘使用率', percent: 53, display: '53%', barColor: '#775dd0', valueColor: '#775dd0' },
-  { label: '消息队列积压', percent: 12, display: '3条', barColor: '#00d4ff', valueColor: '#00d4ff' },
+  { label: '消息队列积压', percent: 12, display: '3条', barColor: '#00d4ff', valueColor: '#00d4ff' }
 ]);
 
 const serviceStatus = ref([
@@ -318,7 +333,7 @@ const serviceStatus = ref([
   { name: 'RabbitMQ', ok: true },
   { name: 'MinIO 存储', ok: true },
   { name: 'AI 模型服务', ok: true },
-  { name: 'Nacos 注册中心', ok: true },
+  { name: 'Nacos 注册中心', ok: true }
 ]);
 
 // ======================== ECharts ========================
@@ -342,35 +357,49 @@ function initTrendChart() {
     grid: { top: 30, right: 20, bottom: 30, left: 50 },
     xAxis: {
       type: 'category',
-      data: trend.map(t => t.date),
+      data: trend.map((t) => t.date),
       axisLine: { lineStyle: { color: CHART_LINE_COLOR } },
-      axisLabel: { color: CHART_TEXT_COLOR },
+      axisLabel: { color: CHART_TEXT_COLOR }
     },
     yAxis: {
       type: 'value',
       splitLine: { lineStyle: { color: CHART_LINE_COLOR } },
-      axisLabel: { color: CHART_TEXT_COLOR },
+      axisLabel: { color: CHART_TEXT_COLOR }
     },
     series: [
       {
-        name: '检测数量', type: 'line', smooth: true, symbol: 'circle', symbolSize: 8,
-        data: trend.map(t => t.total),
+        name: '检测数量',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        data: trend.map((t) => t.total),
         lineStyle: { width: 3, color: '#00d4ff' },
         itemStyle: { color: '#00d4ff', borderWidth: 2 },
-        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#00d4ff33' }, { offset: 1, color: '#00d4ff05' }
-        ]) },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#00d4ff33' },
+            { offset: 1, color: '#00d4ff05' }
+          ])
+        }
       },
       {
-        name: '违规数量', type: 'line', smooth: true, symbol: 'circle', symbolSize: 8,
-        data: trend.map(t => t.violations),
+        name: '违规数量',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        data: trend.map((t) => t.violations),
         lineStyle: { width: 3, color: '#ff4560' },
         itemStyle: { color: '#ff4560', borderWidth: 2 },
-        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#ff456033' }, { offset: 1, color: '#ff456005' }
-        ]) },
-      },
-    ],
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#ff456033' },
+            { offset: 1, color: '#ff456005' }
+          ])
+        }
+      }
+    ]
   });
   return chart;
 }
@@ -380,20 +409,25 @@ function initPieChart() {
   const chart = echarts.init(pieChartRef.value);
   const types = serverData.violationTypes || [];
 
-  const pieData = types.length > 0
-    ? types.map((t, i) => ({ value: t.count, name: t.name, itemStyle: { color: PIE_COLORS[i % PIE_COLORS.length] } }))
-    : [{ value: 1, name: '暂无违规数据', itemStyle: { color: '#334455' } }];
+  const pieData =
+    types.length > 0
+      ? types.map((t, i) => ({ value: t.count, name: t.name, itemStyle: { color: PIE_COLORS[i % PIE_COLORS.length] } }))
+      : [{ value: 1, name: '暂无违规数据', itemStyle: { color: '#334455' } }];
 
   chart.setOption({
     tooltip: { trigger: 'item', backgroundColor: '#0d1b2aee', borderColor: '#0099ff44', textStyle: { color: '#ccc' } },
     legend: { bottom: 0, textStyle: { color: CHART_TEXT_COLOR, fontSize: 11 }, itemWidth: 12, itemHeight: 8 },
-    series: [{
-      type: 'pie', radius: ['42%', '70%'], center: ['50%', '45%'],
-      label: { color: CHART_TEXT_COLOR, fontSize: 11 },
-      labelLine: { lineStyle: { color: '#334455' } },
-      itemStyle: { borderColor: '#0d1b2a', borderWidth: 2 },
-      data: pieData,
-    }],
+    series: [
+      {
+        type: 'pie',
+        radius: ['42%', '70%'],
+        center: ['50%', '45%'],
+        label: { color: CHART_TEXT_COLOR, fontSize: 11 },
+        labelLine: { lineStyle: { color: '#334455' } },
+        itemStyle: { borderColor: '#0d1b2a', borderWidth: 2 },
+        data: pieData
+      }
+    ]
   });
   return chart;
 }
@@ -403,9 +437,9 @@ function initBarChart() {
   const chart = echarts.init(barChartRef.value);
   const depts = serverData.deptStats || [];
 
-  const deptNames = depts.map(d => d.deptName);
-  const checkedData = depts.map(d => d.checked);
-  const violationData = depts.map(d => d.violations);
+  const deptNames = depts.map((d) => d.deptName);
+  const checkedData = depts.map((d) => d.checked);
+  const violationData = depts.map((d) => d.violations);
 
   chart.setOption({
     tooltip: { trigger: 'axis', backgroundColor: '#0d1b2aee', borderColor: '#0099ff44', textStyle: { color: '#ccc' } },
@@ -413,28 +447,37 @@ function initBarChart() {
     xAxis: {
       type: 'value',
       splitLine: { lineStyle: { color: CHART_LINE_COLOR } },
-      axisLabel: { color: CHART_TEXT_COLOR },
+      axisLabel: { color: CHART_TEXT_COLOR }
     },
     yAxis: {
       type: 'category',
       data: deptNames,
       axisLine: { lineStyle: { color: CHART_LINE_COLOR } },
-      axisLabel: { color: CHART_TEXT_COLOR, fontSize: 11 },
+      axisLabel: { color: CHART_TEXT_COLOR, fontSize: 11 }
     },
     series: [
       {
-        name: '已检测', type: 'bar', barWidth: 14, stack: 'total',
+        name: '已检测',
+        type: 'bar',
+        barWidth: 14,
+        stack: 'total',
         data: checkedData,
-        itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-          { offset: 0, color: '#0099ff' }, { offset: 1, color: '#00d4ff' }
-        ]) },
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+            { offset: 0, color: '#0099ff' },
+            { offset: 1, color: '#00d4ff' }
+          ])
+        }
       },
       {
-        name: '违规', type: 'bar', barWidth: 14, stack: 'total',
+        name: '违规',
+        type: 'bar',
+        barWidth: 14,
+        stack: 'total',
         data: violationData,
-        itemStyle: { color: '#ff456099', borderRadius: [0, 3, 3, 0] },
-      },
-    ],
+        itemStyle: { color: '#ff456099', borderRadius: [0, 3, 3, 0] }
+      }
+    ]
   });
   return chart;
 }
@@ -472,7 +515,7 @@ onMounted(() => {
   // 每60秒自动刷新数据
   refreshTimer = setInterval(loadDashboardData, 60000);
 
-  resizeHandler = () => chartInstances.value.forEach(c => c.resize());
+  resizeHandler = () => chartInstances.value.forEach((c) => c.resize());
   window.addEventListener('resize', resizeHandler);
 
   // 标签页重新可见时恢复视频播放
@@ -485,7 +528,7 @@ onMounted(() => {
 onActivated(() => {
   // keep-alive 激活时（从其他路由切回首页）立即恢复视频
   nextTick(() => resumeVideos());
-  chartInstances.value.forEach(c => c?.resize());
+  chartInstances.value.forEach((c) => c?.resize());
 });
 
 onUnmounted(() => {
@@ -493,7 +536,7 @@ onUnmounted(() => {
   clearInterval(refreshTimer);
   window.removeEventListener('resize', resizeHandler);
   document.removeEventListener('visibilitychange', visibilityHandler);
-  chartInstances.value.forEach(c => c.dispose());
+  chartInstances.value.forEach((c) => c.dispose());
 });
 </script>
 
@@ -515,8 +558,7 @@ $pending-color: #feb019;
   min-height: calc(100vh - 84px);
   background: $bg-primary;
   background-image:
-    linear-gradient(rgba(0, 153, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 153, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(0, 153, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 153, 255, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
   padding: 12px 16px 16px;
   display: flex;
@@ -558,17 +600,31 @@ $pending-color: #feb019;
   animation: headerShine 4s linear infinite;
 }
 @keyframes headerShine {
-  to { background-position: 200% center; }
+  to {
+    background-position: 200% center;
+  }
 }
-.header-left, .header-right {
+.header-left,
+.header-right {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 200px;
 }
-.header-right { justify-content: flex-end; }
-.header-sub { color: $text-secondary; font-size: 11px; letter-spacing: 2px; }
-.header-time { color: $accent; font-size: 14px; font-family: 'Courier New', monospace; letter-spacing: 1px; }
+.header-right {
+  justify-content: flex-end;
+}
+.header-sub {
+  color: $text-secondary;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+.header-time {
+  color: $accent;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
 .header-dot {
   width: 6px;
   height: 6px;
@@ -591,14 +647,18 @@ $pending-color: #feb019;
   display: flex;
   align-items: center;
   gap: 12px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
   position: relative;
   overflow: hidden;
 
   &::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 2px;
     background: linear-gradient(90deg, transparent, $accent2, transparent);
     opacity: 0;
@@ -607,7 +667,9 @@ $pending-color: #feb019;
   &:hover {
     border-color: $accent2;
     box-shadow: 0 0 20px rgba(0, 153, 255, 0.1);
-    &::before { opacity: 1; }
+    &::before {
+      opacity: 1;
+    }
   }
 }
 .stat-icon {
@@ -633,7 +695,11 @@ $pending-color: #feb019;
   font-family: 'DIN Alternate', 'Courier New', monospace;
   line-height: 1.2;
 }
-.stat-label { font-size: 12px; color: $text-secondary; white-space: nowrap; }
+.stat-label {
+  font-size: 12px;
+  color: $text-secondary;
+  white-space: nowrap;
+}
 .stat-trend {
   display: flex;
   flex-direction: column;
@@ -644,10 +710,17 @@ $pending-color: #feb019;
 .trend-tag {
   font-size: 12px;
   font-weight: 600;
-  &.up { color: $safe-color; }
-  &.down { color: $danger-color; }
+  &.up {
+    color: $safe-color;
+  }
+  &.down {
+    color: $danger-color;
+  }
 }
-.trend-hint { font-size: 10px; color: $text-secondary; }
+.trend-hint {
+  font-size: 10px;
+  color: $text-secondary;
+}
 
 /* ==================== 卡片通用 ==================== */
 .chart-card {
@@ -658,7 +731,9 @@ $pending-color: #feb019;
   display: flex;
   flex-direction: column;
   transition: border-color 0.3s;
-  &:hover { border-color: rgba(0, 153, 255, 0.3); }
+  &:hover {
+    border-color: rgba(0, 153, 255, 0.3);
+  }
 }
 .card-header {
   display: flex;
@@ -675,13 +750,26 @@ $pending-color: #feb019;
   background: $accent;
   box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
 
-  &.pulse { animation: dotPulse 1.5s ease-in-out infinite; }
+  &.pulse {
+    animation: dotPulse 1.5s ease-in-out infinite;
+  }
 }
 @keyframes dotPulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px $accent; }
-  50% { opacity: 0.4; box-shadow: 0 0 2px $accent; }
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 8px $accent;
+  }
+  50% {
+    opacity: 0.4;
+    box-shadow: 0 0 2px $accent;
+  }
 }
-.card-title { font-size: 14px; font-weight: 500; color: $text-primary; }
+.card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: $text-primary;
+}
 .card-badge {
   margin-left: auto;
   font-size: 10px;
@@ -710,7 +798,9 @@ $pending-color: #feb019;
   flex-direction: column;
   transition: border-color 0.3s;
   border-left: 3px solid $danger-color;
-  &:hover { border-color: rgba(255, 69, 96, 0.4); }
+  &:hover {
+    border-color: rgba(255, 69, 96, 0.4);
+  }
 }
 
 .video-grid {
@@ -787,14 +877,24 @@ $pending-color: #feb019;
 }
 
 /* ==================== 图表行 ==================== */
-.chart-row, .bottom-row {
+.chart-row,
+.bottom-row {
   display: grid;
   gap: 12px;
   flex: 1;
 }
-.chart-row { grid-template-columns: 5fr 3fr 4fr; min-height: 240px; }
-.bottom-row { grid-template-columns: 7fr 5fr; min-height: 220px; }
-.chart-body { flex: 1; min-height: 0; }
+.chart-row {
+  grid-template-columns: 5fr 3fr 4fr;
+  min-height: 240px;
+}
+.bottom-row {
+  grid-template-columns: 7fr 5fr;
+  min-height: 220px;
+}
+.chart-body {
+  flex: 1;
+  min-height: 0;
+}
 
 /* ==================== 检测记录列表 ==================== */
 .record-list {
@@ -804,9 +904,16 @@ $pending-color: #feb019;
   flex-direction: column;
   gap: 2px;
 
-  &::-webkit-scrollbar { width: 3px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb { background: $border-color; border-radius: 3px; }
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: $border-color;
+    border-radius: 3px;
+  }
 }
 .record-item {
   display: grid;
@@ -818,7 +925,9 @@ $pending-color: #feb019;
   font-size: 12px;
   background: rgba(255, 255, 255, 0.02);
   transition: background 0.2s;
-  &:hover { background: rgba(0, 153, 255, 0.08); }
+  &:hover {
+    background: rgba(0, 153, 255, 0.08);
+  }
 }
 .record-empty {
   flex: 1;
@@ -828,25 +937,54 @@ $pending-color: #feb019;
   color: $text-secondary;
   font-size: 13px;
 }
-.record-time { color: $text-secondary; font-family: 'Courier New', monospace; }
-.record-name { color: $text-primary; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.record-user { color: $text-secondary; text-align: center; }
+.record-time {
+  color: $text-secondary;
+  font-family: 'Courier New', monospace;
+}
+.record-name {
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.record-user {
+  color: $text-secondary;
+  text-align: center;
+}
 .record-status {
   padding: 2px 8px;
   border-radius: 3px;
   font-size: 11px;
   text-align: center;
-  &.done { color: $safe-color; background: rgba(0, 227, 150, 0.1); }
-  &.running { color: $pending-color; background: rgba(254, 176, 25, 0.1); }
-  &.fail { color: $danger-color; background: rgba(255, 69, 96, 0.1); }
-  &.pending { color: $text-secondary; background: rgba(255, 255, 255, 0.05); }
+  &.done {
+    color: $safe-color;
+    background: rgba(0, 227, 150, 0.1);
+  }
+  &.running {
+    color: $pending-color;
+    background: rgba(254, 176, 25, 0.1);
+  }
+  &.fail {
+    color: $danger-color;
+    background: rgba(255, 69, 96, 0.1);
+  }
+  &.pending {
+    color: $text-secondary;
+    background: rgba(255, 255, 255, 0.05);
+  }
 }
 .record-result {
   text-align: right;
   font-weight: 500;
-  &.safe { color: $safe-color; }
-  &.danger { color: $danger-color; }
-  &.pending { color: $text-secondary; }
+  &.safe {
+    color: $safe-color;
+  }
+  &.danger {
+    color: $danger-color;
+  }
+  &.pending {
+    color: $text-secondary;
+  }
 }
 
 /* ==================== 系统状态 ==================== */
@@ -863,7 +1001,10 @@ $pending-color: #feb019;
   align-items: center;
   gap: 12px;
 }
-.status-label { font-size: 12px; color: $text-secondary; }
+.status-label {
+  font-size: 12px;
+  color: $text-secondary;
+}
 .status-bar-wrap {
   height: 6px;
   background: #1a2a3a;
@@ -875,7 +1016,12 @@ $pending-color: #feb019;
   border-radius: 3px;
   transition: width 1.5s ease-out;
 }
-.status-value { font-size: 13px; font-weight: 600; text-align: right; font-family: 'Courier New', monospace; }
+.status-value {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  font-family: 'Courier New', monospace;
+}
 
 .status-footer {
   margin-top: auto;
@@ -885,26 +1031,53 @@ $pending-color: #feb019;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
-.svc-item { display: flex; align-items: center; gap: 6px; }
+.svc-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .svc-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  &.online { background: $safe-color; box-shadow: 0 0 6px rgba(0, 227, 150, 0.5); }
-  &.offline { background: $danger-color; box-shadow: 0 0 6px rgba(255, 69, 96, 0.5); }
+  &.online {
+    background: $safe-color;
+    box-shadow: 0 0 6px rgba(0, 227, 150, 0.5);
+  }
+  &.offline {
+    background: $danger-color;
+    box-shadow: 0 0 6px rgba(255, 69, 96, 0.5);
+  }
 }
-.svc-name { font-size: 11px; color: $text-secondary; }
+.svc-name {
+  font-size: 11px;
+  color: $text-secondary;
+}
 
 /* ==================== 响应式 ==================== */
 @media (max-width: 1400px) {
-  .stat-row { grid-template-columns: repeat(3, 1fr); }
-  .main-content { grid-template-columns: 1fr; }
-  .charts-panel .chart-card { min-height: 160px; }
-  .bottom-row { grid-template-columns: 1fr; }
+  .stat-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+  .charts-panel .chart-card {
+    min-height: 160px;
+  }
+  .bottom-row {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 900px) {
-  .stat-row { grid-template-columns: repeat(2, 1fr); }
-  .video-grid-panel { min-width: 0; }
-  .main-content { grid-template-columns: 1fr; }
+  .stat-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .video-grid-panel {
+    min-width: 0;
+  }
+  .main-content {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
