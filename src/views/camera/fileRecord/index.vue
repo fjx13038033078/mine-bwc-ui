@@ -1,7 +1,7 @@
 <template>
-  <div class="p-2">
+  <div class="file-record-page">
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
-      <div v-show="showSearch" class="mb-[10px]">
+      <div v-show="showSearch" class="mb-[10px] file-record-search">
         <el-card shadow="hover">
           <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="90px">
             <el-form-item label="视频序列号" prop="serialNumber">
@@ -57,7 +57,7 @@
       </div>
     </transition>
 
-    <el-card shadow="hover">
+    <el-card class="file-record-table-card" shadow="hover">
       <template #header>
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
@@ -72,7 +72,7 @@
         </el-row>
       </template>
 
-      <el-table v-loading="loading" :data="dataList" border @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" class="file-record-table" :data="dataList" border fit style="width: 100%" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50" align="center" />
         <el-table-column v-if="columns[0].visible" label="视频ID" align="center" prop="videoId" width="80" />
         <el-table-column v-if="columns[12].visible" label="视频序列号" align="center" prop="serialNumber" width="130" :show-overflow-tooltip="true" />
@@ -125,7 +125,7 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="columns[11].visible" label="上传时间" align="center" prop="uploadTime" width="160">
+        <el-table-column v-if="columns[11].visible" label="上传时间" align="center" prop="uploadTime" min-width="160">
           <template #default="scope">
             <span>{{ parseTime(scope.row.uploadTime) }}</span>
           </template>
@@ -620,6 +620,43 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+/* 表格区域横向铺满主内容区（与 app-main 同宽） */
+.file-record-page {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 8px 0 16px;
+  min-width: 0;
+}
+
+.file-record-page .file-record-search :deep(.el-card),
+.file-record-page .file-record-table-card {
+  width: 100%;
+  max-width: 100%;
+}
+
+.file-record-page .file-record-table-card :deep(.el-card__header) {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.file-record-page .file-record-table-card :deep(.el-card__body) {
+  padding: 12px 8px 16px;
+}
+
+.file-record-page .file-record-table {
+  width: 100% !important;
+}
+
+.file-record-page .file-record-table :deep(.el-table__inner-wrapper) {
+  width: 100%;
+}
+
+.file-record-page .file-record-table :deep(table) {
+  width: 100% !important;
+}
+
 .video-container {
   display: flex;
   justify-content: center;

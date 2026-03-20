@@ -30,101 +30,102 @@
       </div>
     </div>
 
-    <!-- 主内容区：四宫格视频 + 图表 -->
-    <div class="main-content">
-      <!-- 左上角：最近违规视频四宫格（最显眼） -->
-      <div class="video-grid-panel">
-        <div class="card-header">
-          <span class="card-dot pulse"></span>
-          <span class="card-title">最近违规视频</span>
-          <span class="card-badge">循环播放</span>
-        </div>
-        <div class="video-grid">
-          <div v-for="(item, idx) in recentViolationVideos" :key="item.videoId" class="video-cell">
-            <video
-              :ref="(el) => setVideoRef(el, idx)"
-              class="violation-video"
-              muted
-              loop
-              playsinline
-              :src="item.playUrl"
-              @loadedmetadata="onVideoLoaded($event, idx)"
-              @timeupdate="onVideoTimeUpdate($event, idx)"
-            />
-            <div class="video-overlay">
-              <span class="video-type">{{ item.violationType || '违规' }}</span>
-              <span class="video-time">{{ formatViolationTime(item) }}</span>
+    <!-- 主内容区：左列（违规视频 + 检测记录）与右列（图表 + 系统状态）等高对齐 -->
+    <div class="middle-section">
+      <div class="middle-col middle-col--left">
+        <!-- 最近违规视频 -->
+        <div class="video-grid-panel">
+          <div class="card-header">
+            <span class="card-dot pulse"></span>
+            <span class="card-title">最近违规视频</span>
+            <span class="card-badge">循环播放</span>
+          </div>
+          <div class="video-grid">
+            <div v-for="(item, idx) in recentViolationVideos" :key="item.videoId" class="video-cell">
+              <video
+                :ref="(el) => setVideoRef(el, idx)"
+                class="violation-video"
+                muted
+                loop
+                playsinline
+                :src="item.playUrl"
+                @loadedmetadata="onVideoLoaded($event, idx)"
+                @timeupdate="onVideoTimeUpdate($event, idx)"
+              />
+              <div class="video-overlay">
+                <span class="video-type">{{ item.violationType || '违规' }}</span>
+                <span class="video-time">{{ formatViolationTime(item) }}</span>
+              </div>
             </div>
+            <div v-if="recentViolationVideos.length === 0" class="video-empty">暂无违规视频</div>
           </div>
-          <div v-if="recentViolationVideos.length === 0" class="video-empty">暂无违规视频</div>
         </div>
-      </div>
 
-      <!-- 右侧：统计图表（纵向排版，为视频留足空间） -->
-      <div class="charts-panel">
-        <div class="chart-card">
+        <!-- 最新检测记录（与上方视频同宽、同列对齐） -->
+        <div class="chart-card record-panel">
           <div class="card-header">
-            <span class="card-dot"></span>
-            <span class="card-title">检测趋势（近7天）</span>
+            <span class="card-dot pulse"></span>
+            <span class="card-title">最新检测记录</span>
+            <span class="card-badge">实时</span>
           </div>
-          <div ref="trendChartRef" class="chart-body"></div>
-        </div>
-        <div class="chart-card">
-          <div class="card-header">
-            <span class="card-dot"></span>
-            <span class="card-title">违规类型分布</span>
-          </div>
-          <div ref="pieChartRef" class="chart-body"></div>
-        </div>
-        <div class="chart-card">
-          <div class="card-header">
-            <span class="card-dot"></span>
-            <span class="card-title">部门检测统计</span>
-          </div>
-          <div ref="barChartRef" class="chart-body"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 底部区域 -->
-    <div class="bottom-row">
-      <!-- 最新检测记录 -->
-      <div class="chart-card span-7">
-        <div class="card-header">
-          <span class="card-dot pulse"></span>
-          <span class="card-title">最新检测记录</span>
-          <span class="card-badge">实时</span>
-        </div>
-        <div class="record-list">
-          <div v-for="(record, index) in recentRecords" :key="index" class="record-item">
-            <span class="record-time">{{ record.time }}</span>
-            <span :class="['record-status', statusClass(record.status)]">{{ record.statusText }}</span>
-            <span class="record-name" :title="record.fileName">{{ record.fileName }}</span>
-            <span class="record-user">{{ record.userName }}</span>
-            <span :class="['record-result', resultClass(record)]">{{ record.resultText }}</span>
-          </div>
-          <div v-if="recentRecords.length === 0" class="record-empty">暂无检测记录</div>
-        </div>
-      </div>
-
-      <!-- 系统状态 -->
-      <div class="chart-card span-5">
-        <div class="card-header">
-          <span class="card-dot"></span>
-          <span class="card-title">系统运行状态</span>
-        </div>
-        <div class="system-status">
-          <div v-for="item in systemStatus" :key="item.label" class="status-item">
-            <div class="status-label">{{ item.label }}</div>
-            <div class="status-bar-wrap">
-              <div class="status-bar" :style="{ width: item.percent + '%', background: item.barColor }"></div>
+          <div class="record-list">
+            <div v-for="(record, index) in recentRecords" :key="index" class="record-item">
+              <span class="record-time">{{ record.time }}</span>
+              <span :class="['record-status', statusClass(record.status)]">{{ record.statusText }}</span>
+              <span class="record-name" :title="record.fileName">{{ record.fileName }}</span>
+              <span class="record-user">{{ record.userName }}</span>
+              <span :class="['record-result', resultClass(record)]">{{ record.resultText }}</span>
             </div>
-            <div class="status-value" :style="{ color: item.valueColor }">{{ item.display }}</div>
+            <div v-if="recentRecords.length === 0" class="record-empty">暂无检测记录</div>
           </div>
-          <div class="status-footer">
-            <div v-for="svc in serviceStatus" :key="svc.name" class="svc-item">
-              <span :class="['svc-dot', svc.ok ? 'online' : 'offline']"></span>
-              <span class="svc-name">{{ svc.name }}</span>
+        </div>
+      </div>
+
+      <div class="middle-col middle-col--right">
+        <!-- 统计图表 -->
+        <div class="charts-panel">
+          <div class="chart-card">
+            <div class="card-header">
+              <span class="card-dot"></span>
+              <span class="card-title">检测趋势（近7天）</span>
+            </div>
+            <div ref="trendChartRef" class="chart-body"></div>
+          </div>
+          <div class="chart-card">
+            <div class="card-header">
+              <span class="card-dot"></span>
+              <span class="card-title">违规类型分布</span>
+            </div>
+            <div ref="pieChartRef" class="chart-body"></div>
+          </div>
+          <div class="chart-card">
+            <div class="card-header">
+              <span class="card-dot"></span>
+              <span class="card-title">部门检测统计</span>
+            </div>
+            <div ref="barChartRef" class="chart-body"></div>
+          </div>
+        </div>
+
+        <!-- 系统状态 -->
+        <div class="chart-card system-panel">
+          <div class="card-header">
+            <span class="card-dot"></span>
+            <span class="card-title">系统运行状态</span>
+          </div>
+          <div class="system-status">
+            <div v-for="item in systemStatus" :key="item.label" class="status-item">
+              <div class="status-label">{{ item.label }}</div>
+              <div class="status-bar-wrap">
+                <div class="status-bar" :style="{ width: item.percent + '%', background: item.barColor }"></div>
+              </div>
+              <div class="status-value" :style="{ color: item.valueColor }">{{ item.display }}</div>
+            </div>
+            <div class="status-footer">
+              <div v-for="svc in serviceStatus" :key="svc.name" class="svc-item">
+                <span :class="['svc-dot', svc.ok ? 'online' : 'offline']"></span>
+                <span class="svc-name">{{ svc.name }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -780,13 +781,33 @@ $pending-color: #feb019;
   border: 1px solid rgba(0, 212, 255, 0.3);
 }
 
-/* ==================== 主内容区 ==================== */
-.main-content {
+/* ==================== 主内容区（左右两列等高，左列视频与记录同宽对齐） ==================== */
+.middle-section {
   display: grid;
   grid-template-columns: 1fr minmax(280px, 0.7fr);
   gap: 12px;
+  align-items: stretch;
   flex: 1;
-  min-height: 480px;
+  min-height: 520px;
+}
+
+.middle-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.middle-col--left {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  min-height: 0;
+}
+
+.middle-col--right {
+  flex: 1;
 }
 
 .video-grid-panel {
@@ -796,10 +817,25 @@ $pending-color: #feb019;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
   transition: border-color 0.3s;
   border-left: 3px solid $danger-color;
   &:hover {
     border-color: rgba(255, 69, 96, 0.4);
+  }
+}
+
+/* 与上方视频区等分左列高度、同宽 */
+.record-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .record-list {
+    flex: 1;
+    min-height: 0;
   }
 }
 
@@ -809,7 +845,7 @@ $pending-color: #feb019;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   gap: 8px;
-  min-height: 400px;
+  min-height: 280px;
 }
 
 .video-cell {
@@ -857,7 +893,7 @@ $pending-color: #feb019;
   justify-content: center;
   color: $text-secondary;
   font-size: 14px;
-  min-height: 380px;
+  min-height: 200px;
 }
 
 .charts-panel {
@@ -865,31 +901,29 @@ $pending-color: #feb019;
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .charts-panel .chart-card {
   flex: 1;
-  min-height: 140px;
-}
-
-.charts-panel .chart-card .chart-body {
   min-height: 120px;
 }
 
-/* ==================== 图表行 ==================== */
-.chart-row,
-.bottom-row {
+.charts-panel .chart-card .chart-body {
+  min-height: 100px;
+}
+
+.system-panel {
+  flex-shrink: 0;
+}
+
+/* ==================== 图表行（兼容） ==================== */
+.chart-row {
   display: grid;
   gap: 12px;
-  flex: 1;
-}
-.chart-row {
   grid-template-columns: 5fr 3fr 4fr;
   min-height: 240px;
-}
-.bottom-row {
-  grid-template-columns: 7fr 5fr;
-  min-height: 220px;
 }
 .chart-body {
   flex: 1;
@@ -1059,14 +1093,11 @@ $pending-color: #feb019;
   .stat-row {
     grid-template-columns: repeat(3, 1fr);
   }
-  .main-content {
+  .middle-section {
     grid-template-columns: 1fr;
   }
   .charts-panel .chart-card {
-    min-height: 160px;
-  }
-  .bottom-row {
-    grid-template-columns: 1fr;
+    min-height: 140px;
   }
 }
 @media (max-width: 900px) {
@@ -1076,7 +1107,7 @@ $pending-color: #feb019;
   .video-grid-panel {
     min-width: 0;
   }
-  .main-content {
+  .middle-section {
     grid-template-columns: 1fr;
   }
 }
