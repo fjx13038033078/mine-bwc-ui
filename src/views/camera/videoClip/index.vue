@@ -6,7 +6,13 @@
         <el-card shadow="hover">
           <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="90px">
             <el-form-item label="原视频文件名" prop="sourceFileName">
-              <el-input v-model="queryParams.sourceFileName" placeholder="请输入原视频文件名" clearable style="width: 260px" @keyup.enter="handleQuery" />
+              <el-input
+                v-model="queryParams.sourceFileName"
+                placeholder="请输入原视频文件名"
+                clearable
+                style="width: 260px"
+                @keyup.enter="handleQuery"
+              />
             </el-form-item>
             <el-form-item label="切片状态" prop="clipStatus">
               <el-select v-model="queryParams.clipStatus" placeholder="请选择状态" clearable style="width: 140px">
@@ -36,9 +42,24 @@
         </el-row>
       </template>
 
-      <el-table v-loading="loading" class="video-clip-table" :data="dataList" border fit style="width: 100%" @selection-change="handleSelectionChange">
+      <el-table
+        v-loading="loading"
+        class="video-clip-table"
+        :data="dataList"
+        border
+        fit
+        style="width: 100%"
+        @selection-change="handleSelectionChange"
+      >
         <el-table-column type="selection" width="50" align="center" />
-        <el-table-column v-if="columns[0].visible" label="原视频文件名" align="center" prop="sourceFileName" min-width="240" :show-overflow-tooltip="true" />
+        <el-table-column
+          v-if="columns[0].visible"
+          label="原视频文件名"
+          align="center"
+          prop="sourceFileName"
+          min-width="240"
+          :show-overflow-tooltip="true"
+        />
         <el-table-column v-if="columns[1].visible" label="切片总数" align="center" prop="sourceClipCount" width="100">
           <template #default="scope">
             <el-tag type="info" effect="plain">{{ scope.row.sourceClipCount ?? '-' }}</el-tag>
@@ -69,7 +90,14 @@
             <el-tag :type="getStatusType(scope.row.clipStatus)">{{ getStatusLabel(scope.row.clipStatus) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column v-if="columns[8].visible" label="失败信息" align="center" prop="errorMessage" min-width="160" :show-overflow-tooltip="true" />
+        <el-table-column
+          v-if="columns[8].visible"
+          label="失败信息"
+          align="center"
+          prop="errorMessage"
+          min-width="160"
+          :show-overflow-tooltip="true"
+        />
         <el-table-column v-if="columns[9].visible" label="创建时间" align="center" prop="createTime" min-width="160">
           <template #default="scope">{{ parseTime(scope.row.createTime) }}</template>
         </el-table-column>
@@ -78,7 +106,9 @@
             <el-tooltip content="播放切片" placement="top">
               <el-button
                 v-hasPermi="['camera:videoClip:query']"
-                link type="primary" icon="VideoPlay"
+                link
+                type="primary"
+                icon="VideoPlay"
                 :disabled="scope.row.clipStatus !== 1"
                 @click="handlePlay(scope.row)"
               />
@@ -86,7 +116,9 @@
             <el-tooltip content="下载切片" placement="top">
               <el-button
                 v-hasPermi="['camera:videoClip:query']"
-                link type="primary" icon="Download"
+                link
+                type="primary"
+                icon="Download"
                 :disabled="scope.row.clipStatus !== 1"
                 @click="handleDownload(scope.row)"
               />
@@ -94,7 +126,9 @@
             <el-tooltip content="刷新URL" placement="top">
               <el-button
                 v-hasPermi="['camera:videoClip:query']"
-                link type="primary" icon="Refresh"
+                link
+                type="primary"
+                icon="Refresh"
                 :disabled="scope.row.clipStatus !== 1"
                 @click="handleRefreshUrl(scope.row)"
               />
@@ -112,15 +146,7 @@
     <!-- 视频播放对话框 -->
     <el-dialog v-model="playDialog.visible" :title="playDialog.title" width="860px" append-to-body :before-close="handlePlayClose">
       <div class="video-player-container">
-        <video
-          v-if="playDialog.url"
-          ref="videoRef"
-          class="clip-video-player"
-          controls
-          autoplay
-          :src="playDialog.url"
-          @error="handleVideoError"
-        >
+        <video v-if="playDialog.url" ref="videoRef" class="clip-video-player" controls autoplay :src="playDialog.url" @error="handleVideoError">
           您的浏览器不支持 HTML5 视频播放
         </video>
         <div v-else class="video-loading">
@@ -129,9 +155,15 @@
         </div>
       </div>
       <div class="clip-info-bar">
-        <span><el-icon><Timer /></el-icon> 起始：{{ playDialog.startSecond?.toFixed(1) }}s</span>
-        <span><el-icon><Timer /></el-icon> 结束：{{ playDialog.endSecond?.toFixed(1) }}s</span>
-        <span><el-icon><Clock /></el-icon> 时长：{{ playDialog.durationSeconds?.toFixed(1) }}s</span>
+        <span
+          ><el-icon><Timer /></el-icon> 起始：{{ playDialog.startSecond?.toFixed(1) }}s</span
+        >
+        <span
+          ><el-icon><Timer /></el-icon> 结束：{{ playDialog.endSecond?.toFixed(1) }}s</span
+        >
+        <span
+          ><el-icon><Clock /></el-icon> 时长：{{ playDialog.durationSeconds?.toFixed(1) }}s</span
+        >
       </div>
     </el-dialog>
   </div>
@@ -231,7 +263,7 @@ const resetQuery = () => {
 
 // ---------- 选择 ----------
 const handleSelectionChange = (selection: VideoClipVO[]) => {
-  selectedIds.value = selection.map(s => s.clipId);
+  selectedIds.value = selection.map((s) => s.clipId);
   multiple.value = selection.length === 0;
 };
 

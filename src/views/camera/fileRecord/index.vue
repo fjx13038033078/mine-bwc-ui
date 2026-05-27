@@ -26,12 +26,7 @@
             </el-form-item>
             <el-form-item label="数据来源" prop="dataSource">
               <el-select v-model="queryParams.dataSource" placeholder="请选择数据来源" clearable style="width: 200px">
-                <el-option
-                  v-for="item in fileRecordDataSourceOptions"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
+                <el-option v-for="item in fileRecordDataSourceOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="AI检测状态" prop="aiCheckStatus">
@@ -77,7 +72,15 @@
         </el-row>
       </template>
 
-      <el-table v-loading="loading" class="file-record-table" :data="dataList" border fit style="width: 100%" @selection-change="handleSelectionChange">
+      <el-table
+        v-loading="loading"
+        class="file-record-table"
+        :data="dataList"
+        border
+        fit
+        style="width: 100%"
+        @selection-change="handleSelectionChange"
+      >
         <el-table-column type="selection" width="50" align="center" />
         <el-table-column v-if="columns[0].visible" label="视频ID" align="center" prop="videoId" width="80" />
         <el-table-column v-if="columns[12].visible" label="视频序列号" align="center" prop="serialNumber" width="130" :show-overflow-tooltip="true" />
@@ -197,7 +200,10 @@
         <el-descriptions-item v-if="detailData.violationType" label="违规类型">
           <el-tag type="danger">{{ detailData.violationType }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item v-if="detailData.hasViolation === 1 && (detailData.violationStartSecond != null || detailData.violationEndSecond != null)" label="违规时间点">
+        <el-descriptions-item
+          v-if="detailData.hasViolation === 1 && (detailData.violationStartSecond != null || detailData.violationEndSecond != null)"
+          label="违规时间点"
+        >
           {{ formatViolationTime(detailData.violationStartSecond, detailData.violationEndSecond) }}
         </el-descriptions-item>
         <el-descriptions-item v-if="detailData.processTime" label="检测耗时"> {{ detailData.processTime?.toFixed(2) }}秒 </el-descriptions-item>
