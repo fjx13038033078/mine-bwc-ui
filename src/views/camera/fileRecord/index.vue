@@ -26,7 +26,12 @@
             </el-form-item>
             <el-form-item label="数据来源" prop="dataSource">
               <el-select v-model="queryParams.dataSource" placeholder="请选择数据来源" clearable style="width: 200px">
-                <el-option v-for="dict in camera_data_source" :key="dict.value" :label="dict.label" :value="dict.value" />
+                <el-option
+                  v-for="item in fileRecordDataSourceOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
               </el-select>
             </el-form-item>
             <el-form-item label="AI检测状态" prop="aiCheckStatus">
@@ -93,7 +98,7 @@
 
         <el-table-column v-if="columns[8].visible" label="数据来源" align="center" prop="dataSource" width="130">
           <template #default="scope">
-            <dict-tag :options="camera_data_source" :value="scope.row.dataSource" />
+            <dict-tag :options="fileRecordDataSourceOptions" :value="scope.row.dataSource" />
           </template>
         </el-table-column>
         <el-table-column v-if="columns[9].visible" label="AI检测状态" align="center" prop="aiCheckStatus" width="110">
@@ -173,7 +178,7 @@
           <el-tag type="info" effect="plain">{{ detailData.mediaType?.toUpperCase() }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="数据来源">
-          <dict-tag :options="camera_data_source" :value="detailData.dataSource" />
+          <dict-tag :options="fileRecordDataSourceOptions" :value="detailData.dataSource" />
         </el-descriptions-item>
         <el-descriptions-item label="AI检测状态">
           <el-tag :type="getAiStatusType(detailData.aiCheckStatus)">
@@ -356,7 +361,12 @@ import { parseTime } from '@/utils/ruoyi';
 import { Warning, DataAnalysis, Picture, EditPen, CircleCheck, VideoPlay } from '@element-plus/icons-vue';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
-const { camera_data_source } = toRefs<any>(proxy?.useDict('camera_data_source'));
+
+/** 检测记录页实际使用的数据来源（与后端入库值一致） */
+const fileRecordDataSourceOptions = [
+  { label: 'AI检测扫描', value: 'scan', elTagType: 'warning' },
+  { label: '视频切割扫描', value: 'clip', elTagType: 'success' }
+];
 
 const loading = ref(true);
 const showSearch = ref(true);
@@ -411,7 +421,7 @@ const queryParams = ref<CameraManagementQuery>({
   userCode: undefined,
   deviceId: undefined,
   mediaType: undefined,
-  dataSource: undefined,
+  dataSource: 'scan',
   aiCheckStatus: undefined
 });
 
@@ -437,6 +447,7 @@ const handleQuery = () => {
 const resetQuery = () => {
   dateRange.value = ['', ''];
   queryFormRef.value?.resetFields();
+  queryParams.value.dataSource = 'scan';
   queryParams.value.pageNum = 1;
   handleQuery();
 };
