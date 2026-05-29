@@ -4,7 +4,7 @@
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
-          <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="90px">
+          <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="100px">
             <el-form-item label="原视频文件名" prop="sourceFileName">
               <el-input
                 v-model="queryParams.sourceFileName"
@@ -32,11 +32,26 @@
 
     <el-card class="video-clip-table-card" shadow="hover">
       <template #header>
-        <el-row :gutter="10" class="mb8">
+        <el-row :gutter="10" class="mb8" align="middle">
           <el-col :span="1.5">
             <el-button v-hasPermi="['camera:videoClip:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleBatchDelete">
               删除
             </el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-tooltip
+              :content="autoRefresh ? (hasPending ? `有处理中切片，${countdown}s 后自动刷新` : `无处理中切片，已暂停轮询`) : '自动刷新已关闭'"
+              placement="top"
+            >
+              <el-button
+                :type="autoRefresh && hasPending ? 'success' : 'default'"
+                plain
+                :icon="autoRefresh ? 'Refresh' : 'VideoPause'"
+                @click="toggleAutoRefresh"
+              >
+                {{ autoRefresh ? (hasPending ? `自动刷新 ${countdown}s` : '等待任务') : '自动刷新' }}
+              </el-button>
+            </el-tooltip>
           </el-col>
           <right-toolbar v-model:show-search="showSearch" :columns="columns" @query-table="getList" />
         </el-row>
@@ -170,7 +185,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, getCurrentInstance, nextTick } from 'vue';
+import { ref, reactive, getCurrentInstance, nextTick, onUnmounted, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { listVideoClip, delVideoClip, refreshClipUrl } from '@/api/camera/videoClip';
 import type { VideoClipVO, VideoClipQuery } from '@/api/camera/videoClip/types';
@@ -363,8 +378,50 @@ const handleBatchDelete = async () => {
   getList();
 };
 
+// ---------- 自动刷新 ----------
+const AUTO_REFRESH_INTERVAL = 10; // 秒
+const autoRefresh = ref(true);
+const countdown = ref(AUTO_REFRESH_INTERVAL);
+
+/** 当前页是否存在「处理中」的切片 */
+const hasPending = computed(() => dataList.value.some((r) => r.clipStatus === 0));
+
+let countdownTimer: ReturnType<typeof setInterval> | null = null;
+
+const stopAutoRefresh = () => {
+  if (countdownTimer !== null) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+};
+
+const startAutoRefresh = () => {
+  stopAutoRefresh();
+  countdown.value = AUTO_REFRESH_INTERVAL;
+  countdownTimer = setInterval(() => {
+    if (!autoRefresh.value) return;
+    countdown.value -= 1;
+    if (countdown.value <= 0) {
+      countdown.value = AUTO_REFRESH_INTERVAL;
+      if (hasPending.value) {
+        getList();
+      }
+    }
+  }, 1000);
+};
+
+const toggleAutoRefresh = () => {
+  autoRefresh.value = !autoRefresh.value;
+  if (autoRefresh.value) {
+    countdown.value = AUTO_REFRESH_INTERVAL;
+  }
+};
+
+onUnmounted(() => stopAutoRefresh());
+
 // ---------- 初始化 ----------
 getList();
+startAutoRefresh();
 </script>
 
 <style scoped>
