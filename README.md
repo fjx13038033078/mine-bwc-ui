@@ -1,129 +1,75 @@
-## 平台简介
+# 执法视频 AI 检测与视频切割系统 — 前端（plus-ui）
 
-- 本仓库为前端技术栈 [Vue3](https://v3.cn.vuejs.org) + [TS](https://www.typescriptlang.org/) + [Element Plus](https://element-plus.org/zh-CN) + [Vite](https://cn.vitejs.dev) 版本。
-- 成员项目: 基于 vben5(ant-design-vue) 的前端项目 [ruoyi-plus-vben5](https://gitee.com/dapppp/ruoyi-plus-vben5)
-- 成员项目: 基于soybean 的前端项目 [ruoyi-plus-soybean](https://gitee.com/xlsea/ruoyi-plus-soybean)
+本仓库是「执法记录仪智能分析系统」的前端，基于 **Vue3 + TypeScript + Element Plus + Vite**。围绕 **AI 违规检测** 与 **视频人体切割** 两条业务链路，提供三个核心页面：功能演示、检测记录、视频切割。
+
+> 配套后端：`RuoYi-Cloud-Plus / ruoyi-camera`（业务编排）+ `cameraAi`（FastAPI AI 服务）。
 
 ---
 
-## 🎥 执法记录仪智能分析模块
+## 一、页面总览
 
-本项目在 RuoYi Plus UI 基础上，扩展了 **执法记录仪视频智能分析** 前端功能，提供完整的视频管理与 AI 检测结果展示界面。
+| 页面 | 路径 | 业务链路 | 主要能力 |
+|------|------|----------|----------|
+| **功能演示** | `src/views/camera/test/index.vue` | AI 检测（HTTP 同步） | 拖拽上传视频 → 实时返回违规事件、事件明细、**相关规章制度** |
+| **检测记录** | `src/views/camera/fileRecord/index.vue` | AI 检测（MQ 异步） | 列表筛选、详情报告、关键帧截图、规章制度、人工复判 |
+| **视频切割** | `src/views/camera/videoClip/index.vue` | 视频切割 | 切片列表、播放、下载、刷新预签名 URL、自动轮询 |
 
-### 核心功能
+## 二、AI 检测 — 检测记录页
 
-| 功能 | 说明 |
-|------|------|
-| 📋 **视频列表** | 分页展示执法视频，支持多条件筛选与排序 |
-| 🎬 **视频播放** | 基于预签名 URL 安全播放私有存储桶中的视频 |
-| 🏷️ **状态标签** | 实时显示 AI 检测状态（待检测/检测中/已完成/失败） |
-| ⚠️ **违规标记** | 突出显示违规视频，红色标签醒目提示 |
-| 📝 **详情查看** | 展示 AI 分析报告、违规类型、关键帧截图 |
-| 📤 **数据导出** | 支持导出视频记录为 Excel 文件 |
+- **列表筛选**：视频序列号、用户、来源设备、媒体类型、数据来源、AI 检测状态、拍摄时间；默认仅显示 AI 检测数据（`dataSource=scan`）。
+- **状态/违规标签**：实时显示 AI 检测状态与违规标记（红色醒目）。
+- **详情对话框**：
+  - 基础信息（序列号、用户、时长、违规时间区间等）；
+  - **关键帧截图**：违规帧可点击放大预览；
+  - **违规事件明细**：解析 `eventsJson`，按事件分条折叠展示，每条带独立的「**相关规章制度**」高亮区块；
+  - 无结构化事件时回退到 `aiCheckResult` 文本展示（兼容历史数据）；
+  - **人工复判**：可对 AI 判定进行二次确认/纠正。
 
-### 页面路径
+## 三、AI 检测 — 功能演示页
+
+- 拖拽上传单个视频（`camera/management/upload`，透传至 Python `analyze_url`）；
+- 实时展示 **安全违规报告**（`unsafe_events`，折叠面板，含事件描述 + **相关规章制度**）与 **事件记录表格**（`events`）；
+- 支持事件记录导出 CSV。
+
+## 四、视频切割页
+
+- 按原视频文件名搜索、按切片状态筛选；
+- 展示原视频文件名、切片总数、当前片段（第 N/M 段）、起止秒、时长、文件大小、状态；
+- **播放 / 下载 / 刷新 URL**：均先调用 `refreshClipUrl` 重新生成预签名地址，规避过期；
+- **智能自动刷新**：列表存在「处理中」切片时自动轮询，全部完成后自动暂停，可手动开关。
+
+## 五、目录结构
 
 ```
 src/views/camera/
-└── fileRecord/
-    └── index.vue      # 执法视频记录管理页面
+├── test/index.vue          # 功能演示（上传分析）
+├── fileRecord/index.vue    # 检测记录（AI 检测结果管理）
+└── videoClip/index.vue     # 视频切割（切片管理）
 
-src/api/camera/
-└── management/
-    ├── index.ts       # API 接口定义
-    └── types.ts       # TypeScript 类型定义
+src/api/
+├── camera/management/      # 检测记录 API + 类型（含 eventsJson）
+├── camera/videoClip/       # 视频切割 API + 类型
+└── videoUpload/            # 功能演示上传 API（含 regulations 字段）
 ```
 
-### 界面特性
-
-- **科技风格主题**: 深色背景 + 蓝色光效，符合执法系统专业形象
-- **响应式布局**: 适配不同屏幕尺寸
-- **数据字典集成**: 数据来源、AI 检测状态等使用字典翻译
-- **图片预览**: 违规截图支持点击放大查看
-
-### 数据字典配置
+## 六、数据字典
 
 | 字典类型 | 说明 |
 |---------|------|
-| `camera_data_source` | 数据来源（scan=自动扫描, manual=手动上传） |
-| `ai_check_status` | AI检测状态（0=待检测, 1=检测中, 2=已完成, 3=失败） |
+| `camera_data_source` | 数据来源（`scan`=AI 检测扫描 / `clip`=视频切割扫描） |
+| `ai_check_status` | AI 检测状态（0=待检测, 1=检测中, 2=已完成, 3=失败） |
 
----
-
-## 配套后端代码仓库地址
-
-| 介绍         | 项目名              | 项目地址                                                                                                                                                                           |
-|------------|:-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 🔥 分布式集群框架 | RuoYi-Vue-Plus   | - [Gitee](https://gitee.com/dromara/RuoYi-Vue-Plus)<br> - [GitHub](https://github.com/dromara/RuoYi-Vue-Plus)<br> - [GitCode](https://gitcode.com/dromara/RuoYi-Vue-Plus)      |
-| 🔥 微服务框架   | RuoYi-Cloud-Plus | - [Gitee](https://gitee.com/dromara/RuoYi-Cloud-Plus)<br>- [GitHub](https://github.com/dromara/RuoYi-Cloud-Plus)<br> - [GitCode](https://gitcode.com/dromara/RuoYi-Cloud-Plus) |
-
-## 分支说明
-
-- ts分支(稳定发布主分支 生产可用)
-- dev分支(开发分支 开发过程中使用)
-
-## 前端运行
+## 七、本地运行
 
 ```bash
 # 安装依赖
 npm install --registry=https://registry.npmmirror.com
 
-# 启动服务
+# 启动开发服务
 npm run dev
 
 # 构建生产环境
 npm run build:prod
-
-# 前端访问地址 http://localhost:80
 ```
 
-## 本框架与RuoYi的业务差异
-
-| 业务         | 功能说明                                                      | 本框架 | RuoYi                         |
-| ------------ | ------------------------------------------------------------- | ------ | ----------------------------- |
-| 租户管理     | 系统内租户的管理 如:租户套餐、过期时间、用户数量、企业信息等  | 支持   | 无                            |
-| 租户套餐管理 | 系统内租户所能使用的套餐管理 如:套餐内所包含的菜单等          | 支持   | 无                            |
-| 用户管理     | 用户的管理配置 如:新增用户、分配用户所属部门、角色、岗位等    | 支持   | 支持                          |
-| 部门管理     | 配置系统组织机构（公司、部门、小组） 树结构展现支持数据权限   | 支持   | 支持                          |
-| 岗位管理     | 配置系统用户所属担任职务                                      | 支持   | 支持                          |
-| 菜单管理     | 配置系统菜单、操作权限、按钮权限标识等                        | 支持   | 支持                          |
-| 角色管理     | 角色菜单权限分配、设置角色按机构进行数据范围权限划分          | 支持   | 支持                          |
-| 字典管理     | 对系统中经常使用的一些较为固定的数据进行维护                  | 支持   | 支持                          |
-| 参数管理     | 对系统动态配置常用参数                                        | 支持   | 支持                          |
-| 通知公告     | 系统通知公告信息发布维护                                      | 支持   | 支持                          |
-| 操作日志     | 系统正常操作日志记录和查询 系统异常信息日志记录和查询         | 支持   | 支持                          |
-| 登录日志     | 系统登录日志记录查询包含登录异常                              | 支持   | 支持                          |
-| 文件管理     | 系统文件展示、上传、下载、删除等管理                          | 支持   | 无                            |
-| 文件配置管理 | 系统文件上传、下载所需要的配置信息动态添加、修改、删除等管理  | 支持   | 无                            |
-| 在线用户管理 | 已登录系统的在线用户信息监控与强制踢出操作                    | 支持   | 支持                          |
-| 定时任务     | 运行报表、任务管理(添加、修改、删除)、日志管理、执行器管理等  | 支持   | 仅支持任务与日志管理          |
-| 代码生成     | 多数据源前后端代码的生成（java、html、xml、sql）支持CRUD下载  | 支持   | 仅支持单数据源                |
-| 系统接口     | 根据业务代码自动生成相关的api接口文档                         | 支持   | 支持                          |
-| 服务监控     | 监视集群系统CPU、内存、磁盘、堆栈、在线日志、Spring相关配置等 | 支持   | 仅支持单机CPU、内存、磁盘监控 |
-| 缓存监控     | 对系统的缓存信息查询，命令统计等。                            | 支持   | 支持                          |
-| 在线构建器   | 拖动表单元素生成相应的HTML代码。                              | 支持   | 支持                          |
-| 使用案例     | 系统的一些功能案例                                            | 支持   | 不支持                        |
-
-## 演示图例
-
-|                                                                                                      |                                                                                                      |
-| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| ![输入图片说明](https://foruda.gitee.com/images/1680077524361362822/270bb429_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680077619939771291/989bf9b6_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680077681751513929/1c27c5bd_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680077721559267315/74d63e23_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680077765638904515/1b75d4a6_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078026375951297/eded7a4b_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078237104531207/0eb1b6a7_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078254306078709/5931e22f_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078287971528493/0b9af60a_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078308138770249/8d3b6696_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078352553634393/db5ef880_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078378238393374/601e4357_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078414983206024/2aae27c1_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078446738419874/ecce7d59_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078475971341775/149e8634_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078491666717143/3fadece7_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078558863188826/fb8ced2a_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078574561685461/ae68a0b2_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078594932772013/9d8bfec6_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078626493093532/fcfe4ff6_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078643608812515/0295bd4f_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078685196286463/d7612c81_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078703877318597/56fce0bc_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078716586545643/b6dbd68f_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078734103217688/eb1e6aa6_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078759131415480/73c525d8_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078779416197879/75e3ed02_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078802329118061/77e10915_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078893627848351/34a1c342_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078928175016986/f126ec4a_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078941718318363/b68a0f72_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680078963175518631/3bb769a1_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680078982294090567/b31c343d_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680079000642440444/77ca82a9_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680079020995074177/03b7d52e_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680079039367822173/76811806_1766278.png '屏幕截图') |
-| ![输入图片说明](https://foruda.gitee.com/images/1680079274333484664/4dfdc7c0_1766278.png '屏幕截图') | ![输入图片说明](https://foruda.gitee.com/images/1680079290467458224/d6715fcf_1766278.png '屏幕截图') |
+> 前端技术底座基于 RuoYi Plus UI（Vue3 + TS + Element Plus + Vite），框架自身的通用能力详见其官方仓库，此处不再赘述。
