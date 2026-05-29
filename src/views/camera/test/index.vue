@@ -123,6 +123,14 @@
                   <div class="report-content">
                     <pre class="report-text">{{ event.event_description }}</pre>
                   </div>
+                  <!-- 相关规章制度（RAG 检索结果） -->
+                  <div v-if="event.regulations" class="regulations-block">
+                    <div class="regulations-title">
+                      <el-icon color="#E6A23C" :size="16"><i-ep-document /></el-icon>
+                      相关规章制度
+                    </div>
+                    <pre class="regulations-text">{{ event.regulations }}</pre>
+                  </div>
                 </div>
               </el-collapse-item>
             </el-collapse>
@@ -575,6 +583,38 @@ const handleExport = () => {
     color: #303133;
     white-space: pre-wrap;
     word-wrap: break-word;
+  }
+
+  .regulations-block {
+    margin-top: 16px;
+    border: 1px solid #f3d19e;
+    border-radius: 8px;
+    background: #fdf6ec;
+    overflow: hidden;
+
+    .regulations-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #e6a23c;
+      background: #faecd8;
+    }
+
+    .regulations-text {
+      margin: 0;
+      padding: 16px;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #5c4813;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 320px;
+      overflow-y: auto;
+    }
   }
 }
 

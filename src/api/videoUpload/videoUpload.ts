@@ -11,6 +11,8 @@ export interface VideoEvent {
   user_number: string;
   unit_number: string;
   serial_number: string;
+  /** 相关规章制度（RAG 检索结果，仅违规事件有值） */
+  regulations?: string;
 }
 
 /**
@@ -30,6 +32,9 @@ export interface VideoUploadResponse {
       success: boolean;
       events: VideoEvent[];
       total_events: number;
+      /** 违规事件列表（含相关规章制度） */
+      unsafe_events?: VideoEvent[];
+      total_unsafe_events?: number;
     };
     upload_file_name: string;
     upload_file_size: string;

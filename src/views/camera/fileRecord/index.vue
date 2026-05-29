@@ -235,8 +235,34 @@
           </el-image>
         </div>
 
-        <!-- AI分析结果 -->
-        <div v-if="detailData.aiCheckResult" class="result-section">
+        <!-- 违规事件明细（含相关规章制度），优先展示结构化数据 -->
+        <div v-if="detailEventList.length > 0" class="result-section">
+          <h4>违规事件明细</h4>
+          <el-collapse v-model="activeDetailEvent" accordion class="event-collapse">
+            <el-collapse-item v-for="(event, index) in detailEventList" :key="index" :name="index">
+              <template #title>
+                <div class="detail-event-title">
+                  <el-tag type="danger" size="small">事件 {{ index + 1 }}</el-tag>
+                  <span class="detail-event-time"> {{ event.start_time || '-' }} ~ {{ event.end_time || '-' }} </span>
+                  <el-tag v-if="event.serial_number" type="info" size="small">{{ event.serial_number }}</el-tag>
+                </div>
+              </template>
+              <div class="detail-event-content">
+                <p class="detail-event-desc">{{ event.event_description || '-' }}</p>
+                <div v-if="event.regulations" class="regulations-block">
+                  <div class="regulations-title">
+                    <el-icon><Document /></el-icon>
+                    <span>相关规章制度</span>
+                  </div>
+                  <pre class="regulations-text">{{ event.regulations }}</pre>
+                </div>
+              </div>
+            </el-collapse-item>
+          </el-collapse>
+        </div>
+
+        <!-- AI分析结果（结构化事件缺失时的文本兜底） -->
+        <div v-else-if="detailData.aiCheckResult" class="result-section">
           <h4>分析结果</h4>
           <pre class="ai-result-text">{{ formatAiResult(detailData.aiCheckResult) }}</pre>
         </div>
@@ -364,7 +390,7 @@
 import { listCameraManagement, delCameraManagement, getVideoPlayUrl, submitManualReview } from '@/api/camera/management';
 import { CameraManagementVO, CameraManagementQuery, ManualReviewForm } from '@/api/camera/management/types';
 import { parseTime } from '@/utils/ruoyi';
-import { Warning, DataAnalysis, Picture, EditPen, CircleCheck, VideoPlay } from '@element-plus/icons-vue';
+import { Warning, DataAnalysis, Picture, EditPen, CircleCheck, VideoPlay, Document } from '@element-plus/icons-vue';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -410,6 +436,8 @@ const detailDialog = reactive<DialogOption>({
 });
 
 const detailData = ref<Partial<CameraManagementVO>>({});
+// 详情页违规事件折叠面板当前展开项
+const activeDetailEvent = ref<number>(0);
 
 // 播放对话框
 const playDialog = reactive({
@@ -467,6 +495,7 @@ const handleSelectionChange = (selection: CameraManagementVO[]) => {
 /** 查看详情 */
 const handleView = (row: CameraManagementVO) => {
   detailData.value = row;
+  activeDetailEvent.value = 0;
   detailDialog.visible = true;
 };
 
@@ -618,6 +647,27 @@ const formatAiResult = (result: string) => {
   }
 };
 
+/** 详情页结构化违规事件（由 eventsJson 解析，字段为 snake_case） */
+interface DetailEvent {
+  event_description?: string;
+  start_time?: string;
+  end_time?: string;
+  serial_number?: string;
+  regulations?: string;
+}
+
+/** 解析 eventsJson，得到带相关规章制度的事件列表；解析失败返回空数组走文本兜底 */
+const detailEventList = computed<DetailEvent[]>(() => {
+  const raw = detailData.value.eventsJson;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as DetailEvent[]) : [];
+  } catch {
+    return [];
+  }
+});
+
 /** 格式化违规时间点（秒 -> MM:SS） */
 const formatViolationTime = (startSec?: number, endSec?: number) => {
   const fmt = (s: number) => {
@@ -739,6 +789,64 @@ onMounted(() => {
   white-space: pre-wrap;
   word-wrap: break-word;
   max-height: 200px;
+  overflow-y: auto;
+}
+
+.event-collapse {
+  border-radius: 4px;
+}
+
+.detail-event-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-event-time {
+  font-size: 13px;
+  color: #606266;
+}
+
+.detail-event-content {
+  padding: 4px 2px;
+}
+
+.detail-event-desc {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #303133;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.regulations-block {
+  border: 1px solid var(--el-color-warning-light-5);
+  border-radius: 4px;
+  background: var(--el-color-warning-light-9);
+  overflow: hidden;
+}
+
+.regulations-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-color-warning);
+  background: var(--el-color-warning-light-8);
+}
+
+.regulations-text {
+  margin: 0;
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #5c4813;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 220px;
   overflow-y: auto;
 }
 

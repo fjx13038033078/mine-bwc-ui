@@ -40,6 +40,8 @@ export interface CameraManagementVO {
   aiCheckStatus: number;
   /** AI检测结果（JSON结构化描述） */
   aiCheckResult: string;
+  /** AI检测事件列表JSON（含每个违规事件对应的相关规章制度） */
+  eventsJson?: string;
   /** 是否有违规行为（0:否,1:是） */
   hasViolation?: number;
   /** 违规类型 */
